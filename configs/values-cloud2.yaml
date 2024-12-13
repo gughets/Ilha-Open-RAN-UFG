@@ -15,6 +15,7 @@ populate:
     - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
     - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
     - open5gs-dbctl add_ue_with_slice 001010000021003 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
+    - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 FFFFFF
 
 # Common
 mongodb:
@@ -28,7 +29,6 @@ mongodb:
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
 
-
 smf:
   enabled: true
   config:
@@ -40,8 +40,8 @@ smf:
     - 2001:4860:4860::8888
     - 2001:4860:4860::8844
     subnetList:
-      - subnet: 10.45.0.0/16
-        gateway: 10.45.0.1
+      - subnet: 10.46.0.0/24
+        gateway: 10.46.0.1
         dnn: oranbr
   mtu: 1500
   nodeSelector:
@@ -49,17 +49,36 @@ smf:
 
 upf:
   enabled: true
+  # services:
+  #   gtpu:
+  #     type: "NodePort"
+  #     nodePorts: "30215"
   config:
     subnetList:
-    - subnet: 10.45.0.0/16
-      gateway: 10.45.0.1
+    - subnet: 10.46.0.0/24
+      gateway: 10.46.0.1
       dnn: oranbr
       dev: ogstun
-      mask: 16
+      mask: 24
       createDev: true
       enableNAT: true
+    upf: ## CU-UP <-> UPF
+      gtpu:
+        advertise: "10.21.2.100"
+        dev: "n3"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
+  podAnnotations:
+    k8s.v1.cni.cncf.io/networks: |
+      [
+        { 
+          "name": "dados-network",
+          "interface": "n3",
+          "ips": [ "10.21.2.100/24" ],
+          "defaultRoute": false
+        }
+      ]
+    
 
 webui:
   enabled: true
@@ -86,6 +105,11 @@ sgwu:
 # 5G
 amf:
   enabled: true
+  # services:
+  #   ngap:
+  #     type: "NodePort"
+  #     nodePorts:
+  #       ngap: "30412"
   config:
     logLevel: info
     guamiList:
@@ -95,10 +119,20 @@ amf:
         amf_id:
           region: 1
           set: 1
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+        amf_id:
+          region: 1
+          set: 1
     taiList:
       - plmn_id:
           mcc: "001"
           mnc: "01"
+        tac: [1]
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
         tac: [1]
     plmnList:
       - plmn_id:
@@ -107,9 +141,29 @@ amf:
         s_nssai:
           - sst: 1
             sd: "0xFFFFFF"
-    networkName: openran
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+    networkName: OPENRANBR
+    amf: ## CU-CP <-> AMF
+      ngap:
+        advertise: "10.21.2.101"
+        dev: "n2"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
+  podAnnotations:
+    k8s.v1.cni.cncf.io/networks: |
+      [
+        {
+          "name": "dados-network",
+          "interface": "n2",
+          "ips": [ "10.21.2.101/24" ],
+          "defaultRoute": false
+        }
+      ]
 
 ausf:
   enabled: true
@@ -129,6 +183,9 @@ nrf:
       - plmn_id:
           mcc: "001"
           mnc: "01"
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
 

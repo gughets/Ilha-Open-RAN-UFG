@@ -4,6 +4,7 @@
 
 - Kubernetes (tested with 1.28)
 - Helm v3
+- OpenEBS Storage Class
 
 ## Getting Started
 
