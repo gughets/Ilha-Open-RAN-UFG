@@ -12,6 +12,7 @@ populate:
   #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
   #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
   #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
+    # - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
     - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 FFFFFF
 
 # Common
@@ -111,11 +112,11 @@ amf:
       - plmn_id:
           mcc: "901"
           mnc: "70"
-        tac: [1]
+        tac: [2]
       - plmn_id:
           mcc: "001"
           mnc: "01"
-        tac: [1]
+        tac: [2]
     plmnList:
       - plmn_id:
           mcc: "901"

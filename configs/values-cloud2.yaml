@@ -143,31 +143,15 @@ amf:
         amf_id:
           region: 1
           set: 1
-      - plmn_id:
-          mcc: "901"
-          mnc: "70"
-        amf_id:
-          region: 1
-          set: 1
     taiList:
       - plmn_id:
           mcc: "001"
           mnc: "01"
         tac: [1]
-      - plmn_id:
-          mcc: "901"
-          mnc: "70"
-        tac: [1]
     plmnList:
       - plmn_id:
           mcc: "001"
           mnc: "01"
-        s_nssai:
-          - sst: 1
-            sd: "0xFFFFFF"
-      - plmn_id:
-          mcc: "901"
-          mnc: "70"
         s_nssai:
           - sst: 1
             sd: "0xFFFFFF"
@@ -206,9 +190,6 @@ nrf:
       - plmn_id:
           mcc: "001"
           mnc: "01"
-      - plmn_id:
-          mcc: "901"
-          mnc: "70"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
 
