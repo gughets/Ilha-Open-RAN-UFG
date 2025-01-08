@@ -5,6 +5,8 @@
 - Kubernetes (tested with 1.28)
 - Helm v3
 - OpenEBS Storage Class
+- Flannel
+- Multus-CNI
 
 ## Getting Started
 
@@ -40,5 +42,4 @@ helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 
 ## TODO
 
-- Readness probe fail on AMF and SMF
 - Need change webui node port for differents deployments
