@@ -41,3 +41,4 @@ helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 ## TODO
 
 - Readness probe fail on AMF and SMF
+- Need change webui node port for differents deployments
