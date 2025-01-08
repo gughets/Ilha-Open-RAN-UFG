@@ -1,28 +1,12 @@
+{{- if  .Values.nad.enabled }}
+
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
-  name: dados-network
-  namespace: open5gs
+  name: {{ .Values.nad.name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
 spec:
   config: |
-    {
-      "cniVersion": "0.3.1",
-      "plugins": [
-        {
-          "type": "macvlan",
-          "capabilities": { "ips": true },
-          "master": "dados",
-          "mode": "bridge",
-          "ipam": {
-            "type": "static",
-            "subnet": "10.21.2.0/24",
-            "rangeStart": "10.21.2.100",
-            "rangeEnd": "10.21.2.200",
-            "gateway": "10.21.2.203"
-          }
-        }, {
-          "capabilities": { "mac": true },
-          "type": "tuning"
-        }
-      ]
-    }
+  {{- .Values.nad.config | nindent 4 }}
+
+{{- end }}

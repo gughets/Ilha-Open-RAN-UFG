@@ -37,3 +37,7 @@ The Open5GS GUI will be available at http://[open5gs-node-IP]:30999
 ```sh
 helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 ```
+
+## TODO
+
+- Readness probe fail on AMF and SMF

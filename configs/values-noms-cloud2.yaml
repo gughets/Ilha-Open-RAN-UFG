@@ -1,0 +1,260 @@
+dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
+
+populate:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs-dbctl
+    tag: 0.10.3
+    pullPolicy: IfNotPresent
+  initCommands:
+  # example of initCommands:
+  #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
+  #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
+  #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
+    - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
+    - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
+    - open5gs-dbctl add_ue_with_slice 001010000021003 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
+
+
+nad: # Network Attachment Definition
+  enabled: true
+  name: "open5gs-network"
+  config: |-
+    {
+      "cniVersion": "0.3.1",
+      "plugins": [
+        {
+          "type": "macvlan",
+          "capabilities": { "ips": true },
+          "master": "dados",
+          "mode": "bridge",
+          "ipam": {
+            "type": "static",
+            "subnet": "10.21.2.0/24",
+            "rangeStart": "10.21.2.100",
+            "rangeEnd": "10.21.2.200",
+            "gateway": "10.21.2.203"
+          }
+        }, {
+          "capabilities": { "mac": true },
+          "type": "tuning"
+        }
+      ]
+    }
+
+# Common
+mongodb:
+  enabled: true
+  image:
+    tag: 8.0.3
+  auth:
+    enabled: false
+  global:
+    storageClass: openebs-hostpath
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+smf:
+  enabled: true
+  readinessProbe:
+    enabled: false # TODO: fix it
+  config:
+    smf:
+      pfcp:
+        dev: "n4"
+    upf:
+      pfcp:
+        hostname: "10.21.2.113"
+    pcrf:
+      enabled: false
+    dnsList:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 2001:4860:4860::8888
+    - 2001:4860:4860::8844
+    subnetList:
+      - subnet: 10.46.0.0/24
+        gateway: 10.46.0.1
+        dnn: oranbr
+  mtu: 9600
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+  podAnnotations:
+    k8s.v1.cni.cncf.io/networks: |
+      [
+        { 
+          "name": "open5gs-network",
+          "interface": "n4",
+          "ips": [ "10.21.2.112/24" ],
+          "defaultRoute": false
+        }
+      ]
+
+upf:
+  enabled: true
+  config:
+    subnetList:
+    - subnet: 10.46.0.0/24
+      gateway: 10.46.0.1
+      dnn: oranbr
+      dev: ogstun
+      mask: 24
+      createDev: true
+      enableNAT: true
+    smf:
+      pfcp:
+        hostname: "10.21.2.112"
+    upf: ## CU-UP <-> UPF
+      gtpu:
+        advertise: "10.21.2.111"
+        dev: "n3"
+      pfcp:
+        dev: "n4"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+  containerSecurityContext:
+    runAsNonRoot: false
+  podAnnotations:
+    k8s.v1.cni.cncf.io/networks: |
+      [
+        { 
+          "name": "open5gs-network",
+          "interface": "n3",
+          "ips": [ "10.21.2.111/24" ],
+          "defaultRoute": false
+        },
+        { 
+          "name": "open5gs-network",
+          "interface": "n4",
+          "ips": [ "10.21.2.113/24" ],
+          "defaultRoute": false
+        }
+      ]
+    
+
+webui:
+  enabled: true
+  services:
+    http:
+      type: NodePort
+      nodePorts:
+        http: "30999"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+# 4G (disabled)
+hss:
+  enabled: false
+mme:
+  enabled: false
+pcrf:
+  enabled: false
+sgwc:
+  enabled: false
+sgwu:
+  enabled: false
+
+# 5G
+amf:
+  enabled: true
+  readinessProbe:
+    enabled: false
+
+  # services:
+  #   ngap:
+  #     type: "NodePort"
+  #     nodePorts:
+  #       ngap: "30412"
+  config:
+    logLevel: info
+    guamiList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        amf_id:
+          region: 1
+          set: 1
+    taiList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        tac: [1]
+    plmnList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+    networkName: OpenRANBR-1
+    amf: ## CU-CP <-> AMF
+      ngap:
+        dev: "n2"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+  podAnnotations:
+    k8s.v1.cni.cncf.io/networks: |
+      [
+        {
+          "name": "open5gs-network",
+          "interface": "n2",
+          "ips": [ "10.21.2.110/24" ],
+          "defaultRoute": false
+        }
+      ]
+
+ausf:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+bsf:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+nrf:
+  enabled: true
+  config:
+    logLevel: info
+    servingList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+nssf:
+  enabled: true
+  config:
+    nsiList:
+      - uri: ""
+        sst: 1
+        sd: "0xFFFFFF"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+pcf:
+  enabled: true
+  mongodb:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+scp:
+  enabled: true
+  mongodb:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+
+udm:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
+    
+udr:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud2
