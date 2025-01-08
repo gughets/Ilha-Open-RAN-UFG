@@ -33,8 +33,7 @@ nad: # Network Attachment Definition
             "type": "static",
             "subnet": "10.21.2.0/24",
             "rangeStart": "10.21.2.100",
-            "rangeEnd": "10.21.2.200",
-            "gateway": "10.21.2.203"
+            "rangeEnd": "10.21.2.200"
           }
         }, {
           "capabilities": { "mac": true },
@@ -57,8 +56,6 @@ mongodb:
 
 smf:
   enabled: true
-  readinessProbe:
-    enabled: false # TODO: fix it
   config:
     smf:
       pfcp:
@@ -158,10 +155,6 @@ sgwu:
 # 5G
 amf:
   enabled: true
-  readinessProbe:
-    enabled: false
-  livenessProbe:
-    enabled: false
   config:
     logLevel: info
     guamiList:
@@ -186,7 +179,7 @@ amf:
     networkName: OpenRANBR-1
     amf: ## CU-CP <-> AMF
       ngap:
-        dev: "n2"
+        dev: "eth0"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
   podAnnotations:
@@ -195,8 +188,7 @@ amf:
         {
           "name": "open5gs-network",
           "interface": "n2",
-          "ips": [ "10.21.2.100/24" ],
-          "defaultRoute": false
+          "ips": [ "10.21.2.100/24" ]
         }
       ]
 

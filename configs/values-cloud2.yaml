@@ -16,6 +16,31 @@ populate:
     - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
     - open5gs-dbctl add_ue_with_slice 001010000021003 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF
 
+nad: # Network Attachment Definition
+  enabled: true
+  name: "open5gs-network"
+  config: |-
+    {
+      "cniVersion": "0.3.1",
+      "plugins": [
+        {
+          "type": "macvlan",
+          "capabilities": { "ips": true },
+          "master": "dados",
+          "mode": "bridge",
+          "ipam": {
+            "type": "static",
+            "subnet": "10.21.2.0/24",
+            "rangeStart": "10.21.2.100",
+            "rangeEnd": "10.21.2.200"
+          }
+        }, {
+          "capabilities": { "mac": true },
+          "type": "tuning"
+        }
+      ]
+    }
+
 # Common
 mongodb:
   enabled: true

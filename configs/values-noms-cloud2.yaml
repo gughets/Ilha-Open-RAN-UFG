@@ -33,8 +33,7 @@ nad: # Network Attachment Definition
             "type": "static",
             "subnet": "10.21.2.0/24",
             "rangeStart": "10.21.2.100",
-            "rangeEnd": "10.21.2.200",
-            "gateway": "10.21.2.203"
+            "rangeEnd": "10.21.2.200"
           }
         }, {
           "capabilities": { "mac": true },

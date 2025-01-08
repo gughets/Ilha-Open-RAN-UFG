@@ -5,6 +5,9 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: {{ .Values.nad.name | quote }}
   namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    "helm.sh/hook": "pre-install, pre-upgrade" # Prioriza a criação do NAD
+    "helm.sh/hook-weight": "0" # Controla a ordem entre vários recursos
 spec:
   config: |
   {{- .Values.nad.config | nindent 4 }}

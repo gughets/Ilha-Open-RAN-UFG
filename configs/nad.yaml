@@ -1,8 +1,8 @@
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
-  name: dados-network
-  namespace: open5gs
+  name: open5gs-network
+  namespace: open5gs-test
 spec:
   config: |
     {
@@ -17,10 +17,10 @@ spec:
             "type": "static",
             "subnet": "10.21.2.0/24",
             "rangeStart": "10.21.2.100",
-            "rangeEnd": "10.21.2.200",
-            "gateway": "10.21.2.203"
+            "rangeEnd": "10.21.2.200"
           }
-        }, {
+        }, 
+        {
           "capabilities": { "mac": true },
           "type": "tuning"
         }
