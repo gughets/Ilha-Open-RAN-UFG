@@ -57,4 +57,4 @@ dependencies:
   repository: file://../open5gs-webui
   version: 2.2.5
 digest: sha256:04a5004ce509a9bf38c4a4e1da28eb28705b314ce3ddf493c19c67ba5157e8f9
-generated: "2024-12-16T08:08:59.006459725-03:00"
+generated: "2025-01-27T18:12:33.782499873-03:00"

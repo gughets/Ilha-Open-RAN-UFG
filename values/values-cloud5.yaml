@@ -1,0 +1,198 @@
+dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
+
+populate:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs-dbctl
+    tag: 0.10.3
+    pullPolicy: IfNotPresent
+  initCommands:
+  # example of initCommands:
+  #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
+  #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
+  #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
+    # - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CPE
+    - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CELLPHONE-1
+    # - open5gs-dbctl add_ue_with_slice 001010000021003 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # RASP-1
+    # - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 FFFFFF # CELLPHONE-2
+    # - open5gs-dbctl add_ue_with_slice 901700000041596 C27D1C24D7AEA00A71C8868007D6B3F7 87D0D9F22D90EF6C7933494C872D2897 oranbr 1 FFFFFF # RASP-2
+
+# Common
+mongodb:
+  enabled: true
+  image:
+    tag: 8.0.3
+  auth:
+    enabled: false
+  global:
+    storageClass: openebs-hostpath
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+
+smf:
+  enabled: true
+  config:
+    # upf:
+    #   pfcp:
+    #     hostname: "10.21.2.2"
+    #     port: 8805
+    pcrf:
+      enabled: false
+    dnsList:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 2001:4860:4860::8888
+    - 2001:4860:4860::8844
+    subnetList:
+      - subnet: 10.45.0.0/16
+        gateway: 10.45.0.1
+        dnn: oranbr
+  mtu: 1500
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+upf:
+  enabled: true
+  config:
+    hostNetwork: true ## Needed to connect N3/GTP-U
+    upf:
+      pfcp:
+        dev: "eth0"
+      gtpu:
+        dev: "dados"
+        advertise: "10.21.2.2"
+    subnetList:
+    - subnet: 10.45.0.0/16
+      gateway: 10.45.0.1
+      dnn: oranbr
+      dev: ogstun
+      mask: 16
+      createDev: true
+      enableNAT: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+webui:
+  enabled: true
+  services:
+    http:
+      type: "NodePort"
+      nodePorts:
+        http: "30998"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+# 4G (disabled)
+hss:
+  enabled: false
+mme:
+  enabled: false
+pcrf:
+  enabled: false
+sgwc:
+  enabled: false
+sgwu:
+  enabled: false
+
+# 5G
+amf:
+  enabled: true
+  services:
+    ngap:
+      type: "NodePort"
+      nodePorts:
+        ngap: "30412"
+  config:
+    logLevel: info
+    guamiList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        amf_id:
+          region: 1
+          set: 1
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+        amf_id:
+          region: 1
+          set: 1
+    taiList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        tac: [2]
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+        tac: [2]
+    plmnList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+    networkName: OPENRANBR
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+ausf:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+bsf:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+nrf:
+  enabled: true
+  config:
+    logLevel: info
+    servingList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+nssf:
+  enabled: true
+  config:
+    nsiList:
+      - uri: ""
+        sst: 1
+        sd: "0xFFFFFF"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+pcf:
+  enabled: true
+  mongodb:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+scp:
+  enabled: true
+  mongodb:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+udm:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+    
+udr:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5

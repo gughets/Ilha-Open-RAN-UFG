@@ -33,6 +33,7 @@ spec:
         {{- end }}
     spec:
       {{- include "open5gs.upf.imagePullSecrets" . | nindent 6 }}
+      hostNetwork: {{ .Values.config.hostNetwork }}
       {{- if .Values.podSecurityContext.enabled }}
       securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}

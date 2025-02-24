@@ -25,7 +25,7 @@ smf:
       {{- end }}
   pfcp:
     server:
-    - dev: {{ default "eth0" .Values.config.smf.pfcp.dev }}
+    - dev: eth0
     client:
       upf:
       - address: {{ default (printf "%s-upf-pfcp" $open5gsName) .Values.config.upf.pfcp.hostname }}

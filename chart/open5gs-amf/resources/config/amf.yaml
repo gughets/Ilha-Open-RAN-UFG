@@ -24,7 +24,7 @@ amf:
       {{- end }}
   ngap:
     server:
-    - dev: {{ default "eth0" .Values.config.amf.ngap.dev }}
+    - dev: eth0
   {{- if .Values.metrics.enabled }}
   metrics:
     server:
