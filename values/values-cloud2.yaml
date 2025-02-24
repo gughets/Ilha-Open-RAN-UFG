@@ -34,10 +34,10 @@ mongodb:
 smf:
   enabled: true
   config:
-    # upf:
-    #   pfcp:
-    #     hostname: "10.21.2.2"
-    #     port: 8805
+    upf:
+      pfcp:
+        hostname: "10.21.2.2"
+        port: 8805
     pcrf:
       enabled: false
     dnsList:
@@ -59,7 +59,7 @@ upf:
     hostNetwork: true ## Needed to connect N3/GTP-U
     upf:
       pfcp:
-        dev: "eth0"
+        dev: "dados"
       gtpu:
         dev: "dados"
         advertise: "10.21.2.2"
