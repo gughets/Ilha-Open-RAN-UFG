@@ -1,0 +1,41 @@
+{{- if  .Values.config.hostNetwork }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cleanup-tun-devices
+  annotations:
+    "helm.sh/hook": post-delete
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      hostNetwork: {{ .Values.config.hostNetwork }}
+      containers:
+        - name: cleanup
+          image: bitnami/minideb:bookworm
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            capabilities:
+              add: ["NET_ADMIN"]          
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              install_packages iproute2 &> /dev/null
+              echo "[INFO]: Executing Job to delete UPF tun interfaces"
+              {{- range .Values.config.subnetList }}
+              {{- if .createDev }}
+              echo "[INFO]: Deleting net device {{ .dev }}"
+              if grep "{{ .dev }}" /proc/net/dev > /dev/null; then
+                  echo "[INFO]: Net device {{ .dev }} exists! Removing it..."
+                if ! ip link delete "{{ .dev }}"; then
+                    echo "[ERROR]: Failed to remove {{ .dev }}"
+                    exit 1
+                fi
+              fi
+              {{- end }}
+              {{- end }}
+{{- end }}

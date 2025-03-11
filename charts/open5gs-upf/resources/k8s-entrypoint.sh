@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 echo "Executing k8s customized entrypoint.sh"
