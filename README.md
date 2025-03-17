@@ -2,11 +2,9 @@
 
 ## Requirements
 
-- Kubernetes (tested with 1.28)
+- Kubernetes (1.28 or newer)
 - Helm v3
 - OpenEBS Storage Class
-- Flannel
-- Multus-CNI
 
 ## Getting Started
 
@@ -26,7 +24,7 @@ Install the core network with Helm
 helm upgrade --install open5gs -n open5gs --create-namespace charts/open5gs --version 2.2.6 -f ./values/values-cloud5.yaml
 ```
 
-> **_NOTE_**: nodeSelector is `kubernetes.io/hostname: open5gslocal`, change it if necessary.
+> **_NOTE_**: nodeSelector is `kubernetes.io/hostname: oran-cloud5`, change it if necessary.
 
 The Open5GS GUI will be available at http://[open5gs-node-IP]:30999
 
