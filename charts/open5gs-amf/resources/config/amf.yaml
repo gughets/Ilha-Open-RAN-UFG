@@ -25,6 +25,9 @@ amf:
   ngap:
     server:
     - dev: eth0
+    {{- if .Values.global.n2network.enabled }}
+    - dev: n2
+    {{- end }}
   {{- if .Values.metrics.enabled }}
   metrics:
     server:

@@ -31,6 +31,14 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
+        {{- if $.Values.global.n4network.enabled }}
+        k8s.v1.cni.cncf.io/networks: '[
+            { "name": "{{ $.Values.global.n4network.name }}-open5gs-smf",
+              "interface": "n4",
+              "ips": [ "{{ $.Values.config.n4if.ipAddress }}/{{ $.Values.global.n4network.cidr }}" ],
+              "gateway": [ "{{ $.Values.global.n4network.gatewayIP }}" ]
+            }]'
+        {{- end }}
     spec:
       {{- include "open5gs.smf.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.podSecurityContext.enabled }}

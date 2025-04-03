@@ -25,15 +25,24 @@ smf:
       {{- end }}
   pfcp:
     server:
+    {{- if .Values.global.n4network.enabled }}
+    - dev: n4
+    {{- end}}
     - dev: eth0
     client:
       upf:
       - address: {{ default (printf "%s-upf-pfcp" $open5gsName) .Values.config.upf.pfcp.hostname }}
   gtpc:
     server:
+    {{- if .Values.global.n4network.enabled }}
+    - dev: n4
+    {{- end}}
     - dev: eth0
   gtpu:
     server:
+    {{- if .Values.global.n4network.enabled }}
+    - dev: n4
+    {{- end}}
     - dev: eth0
   {{- if .Values.metrics.enabled }}
   metrics:

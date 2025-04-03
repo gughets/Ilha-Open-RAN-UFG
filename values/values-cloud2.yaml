@@ -1,5 +1,35 @@
 dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
+global:
+  # Global network parametes
+  n2network: 
+    enabled: true
+    name: n2network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+  n3network:
+    enabled: true
+    name: n3network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+  n4network:
+    enabled: true
+    name: n4network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+
 populate:
   enabled: true
   image:
@@ -21,7 +51,7 @@ populate:
 mongodb:
   enabled: true
   image:
-    tag: 8.0.3
+    tag: "8.0"
   auth:
     enabled: false
   global:
@@ -32,10 +62,18 @@ mongodb:
 
 smf:
   enabled: true
+  updateStrategy:
+    type: Recreate  
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   config:
+    n4if:
+      ipAddress: "10.21.2.244"
     upf:
       pfcp:
-        hostname: "10.21.2.2"
+        hostname: "10.21.2.245"
         port: 8805
     pcrf:
       enabled: false
@@ -54,15 +92,25 @@ smf:
 
 upf:
   enabled: true
+  updateStrategy:
+    type: Recreate
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   config:
-    hostNetwork: true ## Needed to connect N3/GTP-U in multi-cluster scenario
+    hostNetwork: false ## Needed to connect N3/GTP-U in multi-cluster scenario
+    n3if:
+      ipAddress: "10.21.2.234"
+    n4if:
+      ipAddress: "10.21.2.245"
     upf:
       pfcp:
-        # dev: "dados" # if hostNetwork is false
-        addr: "10.21.2.2"
+        dev: "n4" # if hostNetwork is false
+        # addr: "10.21.2.2"
       gtpu:
-        # dev: "dados" # if hostNetwork is false
-        addr: "10.21.2.2"
+        dev: "n3" # if hostNetwork is false
+        # addr: "10.21.2.2"
     subnetList:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
@@ -76,6 +124,10 @@ upf:
 
 webui:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs-webui
+    tag: "2.7.5"
   services:
     http:
       type: "NodePort"
@@ -99,13 +151,16 @@ sgwu:
 # 5G
 amf:
   enabled: true
-  services:
-    ngap:
-      type: "NodePort"
-      nodePorts:
-        ngap: "30412"
+  updateStrategy:
+    type: Recreate  
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   config:
     logLevel: info
+    n2if:
+      ipAddress: "10.21.2.249"
     guamiList:
       - plmn_id:
           mcc: "001"
@@ -141,16 +196,28 @@ amf:
 
 ausf:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
 
 bsf:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
 
 nrf:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   config:
     logLevel: info
     servingList:
@@ -165,6 +232,10 @@ nrf:
 
 nssf:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   config:
     nsiList:
       - uri: ""
@@ -175,6 +246,10 @@ nssf:
 
 pcf:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   mongodb:
     enabled: false
   nodeSelector:
@@ -182,6 +257,10 @@ pcf:
 
 scp:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   mongodb:
     enabled: false
   nodeSelector:
@@ -189,10 +268,18 @@ scp:
 
 udm:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2
     
 udr:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.5"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud2

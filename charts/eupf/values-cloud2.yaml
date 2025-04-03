@@ -1,0 +1,204 @@
+---
+
+global:
+  imagePullPolicy: Always
+  
+  # Global network parametes
+  n3network:
+    enabled: true
+    name: n3network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+  n4network:
+    enabled: true
+    name: n4network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+  n6network:
+    enabled: true
+    name: n6network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.0.0
+    cidr: 24
+    gatewayIP: 10.21.0.100
+    excludeIP: 10.21.0.254
+  n9network:
+    enabled: true
+    name: n9network
+    type: ipvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+
+# network paramters
+n3if:  # GTP-U
+  ipAddress: 10.21.2.234
+n9if:  # GTP-U
+  ipAddress: 10.21.2.225
+n4if:  # PFCP
+  ipAddress: 10.21.2.245
+n6if:  # DN
+  ipAddress: 10.21.0.212
+
+deploymentStrategy:
+  type: Recreate  ## TODO: add it to other charts that use multus-cni :)
+
+image:
+  # tag: 0ac3d9fb28808dbca7e123205323e2c09f377971@sha256:a03bdd30efa623b0d3ddc99d9a6472453a43d2d64ed715a9a042e893d82ffb68
+  registry: ghcr.io
+  repository: edgecomllc
+  name: eupf
+  tag: 0.7.0
+  pullPolicy: Always
+
+args:
+  - --config
+  - /app/conf/config.yml
+
+# env:
+#   UPF_PFCP_NODE_ID: $(MY_POD_IP)
+#   UPF_N3_ADDRESS: $(MY_POD_IP)
+
+configMaps:
+  config:
+    data:
+      config.yml: |
+        interface_name: [n3, n6]
+        xdp_attach_mode: generic # generic, native or offload
+        api_address: :8080
+        pfcp_address: :8805
+        pfcp_node_id: 10.21.2.245 # N4
+        metrics_address: :9090
+        n3_address: 10.21.2.234
+        n9_address: 10.21.2.225
+        feature_ueip: true
+        feature_ftup: true
+        ueip_pool: 10.45.0.0/16
+        teid_pool: 65535
+        logging_level: info
+
+volumes:
+  - name: sys
+    hostPath:
+      path: /sys
+  - name: config
+    configMap:
+      name: eupf-config
+      defaultMode: 420
+      items:
+        - key: config.yml
+          mode: 493
+          path: config.yml
+
+volumeMounts:
+  - name: sys
+    mountPath: /sys
+    readOnly:  true
+  - name: config
+    mountPath: /app/conf
+
+bird:
+  enabled: false
+  image: docker.io/edgecom/bird:0.0.5
+  env:
+    BIRD_LOCAL_AS: 65001
+    BIRD_LOCAL_PREFIX: 10.45.0.0/16
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+    endpoints:
+      port: metrics
+      path: "/metrics"
+
+# podAnnotations:
+#   cni.projectcalico.org/ipv4pools: '["default-pool"]'
+#   cni.projectcalico.org/ipAddrs: '["10.233.64.11"]'
+
+podSecurityContext:
+  sysctls:
+  - name: net.ipv4.ip_forward
+    value: "1"
+
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["NET_ADMIN"]
+
+extraContainerPorts:
+  - name: gtpu
+    containerPort: 2152
+    protocol: UDP
+  - name: pfcp
+    containerPort: 8805
+    protocol: UDP
+
+service:
+  type: ClusterIP
+  port: 8080
+  extraPorts:
+    - port: 2152
+      targetPort: gtpu
+      protocol: UDP
+      name: gtpu
+    - port: 8805
+      targetPort: pfcp
+      protocol: UDP
+      name: pfcp
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+ui:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: edgecomllc
+    name: eupf-ui
+    tag: 92294e11a733790ae2872dd1bc3128ce1a550734
+    pullPolicy: Always
+  env:
+    API_ADDR: :8080
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10

@@ -123,11 +123,11 @@ amf:
       - plmn_id:
           mcc: "001"
           mnc: "01"
-        tac: [2]
+        tac: [1]
       - plmn_id:
           mcc: "901"
           mnc: "70"
-        tac: [2]
+        tac: [1]
     plmnList:
       - plmn_id:
           mcc: "001"
