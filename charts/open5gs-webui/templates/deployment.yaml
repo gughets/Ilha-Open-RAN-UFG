@@ -65,7 +65,7 @@ spec:
       {{- end }}
       initContainers:
         - name: init
-          image: bitnami/mongodb:4.4.1-debian-10-r39
+          image: bitnami/mongodb:8.0
           env:
           - name: DB_URI
             {{- if .Values.dbURI }}
@@ -75,7 +75,11 @@ spec:
             {{- end }}
           command: 
             - /bin/bash
-            - /add_admin.sh
+            - -c
+            - |
+              until mongosh "mongodb://open5gs-mongodb:27017" --eval "db.adminCommand('ping')" > /dev/null 2>&1; do echo "Waiting for Mongo..."; sleep 1; done;
+              echo "[init] MongoDB is UP!";
+              /add_admin.sh
           volumeMounts:
           - name: populate
             mountPath: /add_admin.sh
@@ -176,6 +180,7 @@ spec:
         - name: populate
           configMap:
             name: {{ include "common.names.fullname" . }}
+            defaultMode: 0755
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
         {{- end }}

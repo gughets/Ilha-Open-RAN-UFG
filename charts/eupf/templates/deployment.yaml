@@ -100,7 +100,19 @@ spec:
             {{- if .Values.extraContainerPorts }}
             {{- include "helpers.common.tplvalues.render" (dict "value" .Values.extraContainerPorts "context" $) | nindent 12 }}
             {{- end }}
-          {{- include "helpers.pod.probes" . | nindent 10 }}
+          # {{- include "helpers.pod.probes" . | nindent 10 }}
+        {{- with .Values.livenessProbe }}
+          livenessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.readinessProbe }}
+          readinessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.startupProbe }}
+          startupProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- include "helpers.pod.volumeMounts" . | nindent 10 }}
@@ -178,11 +190,11 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.ui.resources | nindent 12 }}
-          {{- with .Values.ui.livenessProbe }}
+          {{- with .Values.ui.livenessProbe | default dict }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.ui.readinessProbe }}
+          {{- with .Values.ui.readinessProbe | default dict }}
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}

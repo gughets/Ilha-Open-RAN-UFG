@@ -38,6 +38,6 @@ The Open5GS GUI will be available at http://[open5gs-node-IP]:30999
 helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 ```
 
-## TODO
+## FIXME
 
-- Need change webui node port for differents deployments
+- UEs do not access 5GC host services

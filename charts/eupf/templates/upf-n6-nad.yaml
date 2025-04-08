@@ -22,7 +22,7 @@ spec:
         {
           "type": {{ .Values.global.n6network.type | quote }},
           "capabilities": { "ips": true },
-          "masterIf": {{ .Values.global.n6network.masterIf | quote }},
+          "master": {{ .Values.global.n6network.masterIf | quote }},
 {{- if eq .Values.global.n6network.type "macvlan" }}
           "mode": "bridge",
 {{- end }}
@@ -33,7 +33,7 @@ spec:
             "type": "static",
             "routes": [
               {
-                "dst": "{{ .Values.global.n6network.subnetIP }}/{{ .Values.global.n6network.cidr }}",
+                "dst": "0.0.0.0/0",
                 "gw": "{{ .Values.global.n6network.gatewayIP }}"
               }
             ]

@@ -32,7 +32,10 @@ spec:
         command: 
         - /bin/bash
         - -c
-        - {{ join "&&" .Values.populate.initCommands | quote }}
+        - |
+          until mongosh "mongodb://open5gs-mongodb:27017" --eval "db.adminCommand('ping')" > /dev/null 2>&1; do echo "Waiting for Mongo..."; sleep 1; done;
+          echo "[init] MongoDB is UP!";
+          {{ join " && " .Values.populate.initCommands }}
       containers:
       - name: populate
         image: {{ template "open5gs.populate.image" . }}
