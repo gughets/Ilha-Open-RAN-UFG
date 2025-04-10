@@ -5,19 +5,19 @@ global:
   
   # Global network parametes
   n3network:
-    enabled: true
+    enabled: false
     name: n3network
     type: macvlan
-    masterIf: vlan3225.p4_1
+    masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
     gatewayIP: 10.21.2.109
     excludeIP: 10.21.2.109
   n4network:
-    enabled: true
+    enabled: false
     name: n4network
     type: macvlan
-    masterIf: vlan3225.p4_1
+    masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
     gatewayIP: 10.21.2.109
@@ -26,22 +26,23 @@ global:
     enabled: false
     name: n6network
     type: macvlan
-    masterIf: acesso
+    masterIf: access
     subnetIP: 10.21.0.0
     cidr: 24
     gatewayIP: 10.21.0.100
     excludeIP: 10.21.0.100
   n9network:
-    enabled: true
+    enabled: false
     name: n9network
     type: macvlan
-    masterIf: vlan3225.p4_1
+    masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
     gatewayIP: 10.21.2.109
     excludeIP: 10.21.2.109
 
 # network paramters
+hostNetwork: true
 n3if:  # GTP-U
   ipAddress: 10.21.2.80
 n9if:  # GTP-U
@@ -55,7 +56,7 @@ deploymentStrategy:
   type: Recreate  ## TODO: add it to other charts that use multus-cni :)
 
 nodeSelector: 
-  kubernetes.io/hostname: oran-cloud2
+  kubernetes.io/hostname: oran-cloud5
 
 image:
   # tag: 0ac3d9fb28808dbca7e123205323e2c09f377971@sha256:a03bdd30efa623b0d3ddc99d9a6472453a43d2d64ed715a9a042e893d82ffb68
@@ -70,15 +71,15 @@ args:
   - /app/conf/config.yml
 
 env:
-  UPF_INTERFACE_NAME: "n3,eth0"
+  UPF_INTERFACE_NAME: "access"
   UPF_XDP_ATTACH_MODE: generic
   UPF_API_ADDRESS: ":8080"
-  UPF_PFCP_ADDRESS: 10.21.2.82:8805
-  UPF_PFCP_NODE_ID: 10.21.2.82
+  UPF_PFCP_ADDRESS: 10.21.0.5:8805
+  UPF_PFCP_NODE_ID: 10.21.0.5
   UPF_ASSOCIATION_SETUP_TIMEOUT: 5
   UPF_METRICS_ADDRESS: :9090
-  UPF_N3_ADDRESS: 10.21.2.80
-  UPF_N9_ADDRESS: 10.21.2.81
+  UPF_N3_ADDRESS: 10.21.0.5
+  UPF_N9_ADDRESS: 10.21.0.5
   UPF_FEATURE_UEIP: true
   UPF_FEATURE_FTUP: true
   UPF_UEIP_POOL: 10.45.0.0/16
@@ -133,10 +134,10 @@ metrics:
 #   cni.projectcalico.org/ipv4pools: '["default-pool"]'
 #   cni.projectcalico.org/ipAddrs: '["172.17.100.2"]'
 
-podSecurityContext:
-  sysctls:
-  - name: net.ipv4.ip_forward
-    value: "1"
+# podSecurityContext:
+#   sysctls:
+#   - name: net.ipv4.ip_forward
+#     value: "1"
 
 securityContext:
   privileged: true

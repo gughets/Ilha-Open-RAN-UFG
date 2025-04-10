@@ -1,0 +1,19 @@
+---
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: eupf-10-45-0-0
+spec:
+  nodeSelector: all()
+  peerIP: 172.17.2.2
+  asNumber: 65001
+---
+apiVersion: crd.projectcalico.org/v1
+kind: BGPConfiguration
+metadata:
+  creationTimestamp: null
+  name: default
+spec:
+  asNumber: 64512
+  logSeverityScreen: Info
+  nodeToNodeMeshEnabled: true

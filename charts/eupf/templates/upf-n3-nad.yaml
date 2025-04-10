@@ -22,7 +22,7 @@ spec:
         {
           "type": {{ .Values.global.n3network.type | quote }},
           "capabilities": { "ips": true },
-          "masterIf": {{ .Values.global.n3network.masterIf | quote }},
+          "master": {{ .Values.global.n3network.masterIf | quote }},
 {{- if eq .Values.global.n3network.type "macvlan" }}
           "mode": "bridge",
 {{- end }}
@@ -30,13 +30,7 @@ spec:
           "mode": "l2",
 {{- end }}
           "ipam": {
-            "type": "static",
-            "routes": [
-              {
-                "dst": "{{ .Values.global.n3network.subnetIP }}/{{ .Values.global.n3network.cidr }}",
-                "gw": "{{ .Values.global.n3network.gatewayIP }}"
-              }
-            ]
+            "type": "static"
           }
         }
 {{- if eq .Values.global.n3network.type "macvlan" -}}

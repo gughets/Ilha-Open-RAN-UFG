@@ -56,5 +56,8 @@ dependencies:
 - name: open5gs-webui
   repository: file://../open5gs-webui
   version: 2.2.5
-digest: sha256:04a5004ce509a9bf38c4a4e1da28eb28705b314ce3ddf493c19c67ba5157e8f9
-generated: "2025-04-01T19:20:21.696276571-03:00"
+- name: eupf
+  repository: file://../eupf
+  version: 0.7.0
+digest: sha256:59510423082c5ad0d52c677561a3dc7e9365e52f90ed50a99475b20112d67ec8
+generated: "2025-04-09T20:48:57.547719549-03:00"

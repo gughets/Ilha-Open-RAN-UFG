@@ -115,3 +115,9 @@ dependencies:
     repository: file://../open5gs-webui
     condition: webui.enabled
     alias: webui
+  - name: eupf
+    version: ~0.7.0
+    repository: file://../eupf
+    condition: eupf.enabled
+    alias: eupf
+

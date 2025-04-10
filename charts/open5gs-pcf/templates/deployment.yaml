@@ -69,7 +69,7 @@ spec:
           command: [
                     'sh',
                     '-c',
-                    'until nc -z open5gs-mongodb 27017; do echo "Waiting for MongoDB..."; sleep 1; done; echo "MongoDB is UP! Continuing..."'
+                    'until nc -z {{ .Release.Name }}-mongodb 27017; do echo "Waiting for MongoDB..."; sleep 1; done; echo "MongoDB is UP! Continuing..."'
                     ]
       {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}

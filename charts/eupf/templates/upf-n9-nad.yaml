@@ -30,13 +30,7 @@ spec:
           "mode": "l2",
 {{- end }}
           "ipam": {
-            "type": "static",
-            "routes": [
-              {
-                "dst": "{{ .Values.global.n9network.subnetIP }}/{{ .Values.global.n9network.cidr }}",
-                "gw": "{{ .Values.global.n9network.gatewayIP }}"
-              }
-            ]
+            "type": "static"
           }
         }
 {{- if eq .Values.global.n9network.type "macvlan" -}}

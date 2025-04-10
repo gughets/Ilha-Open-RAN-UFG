@@ -5,30 +5,30 @@ global:
   n2network: 
     enabled: true
     name: n2network
-    type: ipvlan
+    type: macvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.5
-    excludeIP: 10.21.2.5
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
   n3network:
     enabled: true
     name: n3network
-    type: ipvlan
+    type: macvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.5
-    excludeIP: 10.21.2.5
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
   n4network:
     enabled: true
     name: n4network
-    type: ipvlan
+    type: macvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.5
-    excludeIP: 10.21.2.5
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
 
 populate:
   enabled: true
@@ -58,7 +58,6 @@ mongodb:
     storageClass: openebs-hostpath
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5
-
 
 smf:
   enabled: true
@@ -90,6 +89,10 @@ smf:
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5
 
+# TODO
+eupf:
+  enabled: false
+  
 upf:
   enabled: true
   updateStrategy:
