@@ -69,6 +69,7 @@ smf:
     tag: "2.7.5"
   config:
     n4if:
+      enabled: true
       ipAddress: "10.21.2.55"
     upf:
       pfcp:
