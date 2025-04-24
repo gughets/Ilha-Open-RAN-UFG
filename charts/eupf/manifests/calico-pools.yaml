@@ -3,6 +3,7 @@ apiVersion: crd.projectcalico.org/v1
 kind: IPPool
 metadata:
   name: eupf-ue-pool-10-45-0-0
+  namespace: eupf
 spec:
   cidr: 10.45.0.0/16
   ipipMode: Never

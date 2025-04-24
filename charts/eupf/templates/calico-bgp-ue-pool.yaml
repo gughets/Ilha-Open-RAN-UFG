@@ -1,0 +1,34 @@
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: eupf-10-45-0-0
+  namespace: {{ .Release.Namespace }}
+spec:
+  nodeSelector: all()
+  peerIP: 172.2.0.100
+  asNumber: 65001
+---
+apiVersion: crd.projectcalico.org/v1
+kind: BGPConfiguration
+metadata:
+  name: eupf-bgp-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  asNumber: 64512
+  logSeverityScreen: Info
+  nodeToNodeMeshEnabled: true
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: eupf-ue-pool-10-45-0-0
+  namespace: {{ .Release.Namespace }}
+spec:
+  cidr: 10.45.0.0/16
+  ipipMode: Never
+  natOutgoing: true
+  disabled: false
+  nodeSelector: all()
+  allowedUses:
+    - Workload
+    - Tunnel

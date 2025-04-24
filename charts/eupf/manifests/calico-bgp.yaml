@@ -3,9 +3,10 @@ apiVersion: crd.projectcalico.org/v1
 kind: BGPPeer
 metadata:
   name: eupf-10-45-0-0
+  namespace: eupf
 spec:
   nodeSelector: all()
-  peerIP: 172.17.2.2
+  peerIP: 172.2.0.100
   asNumber: 65001
 ---
 apiVersion: crd.projectcalico.org/v1

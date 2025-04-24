@@ -25,7 +25,7 @@ smf:
       {{- end }}
   pfcp:
     server:
-    {{- if and (eq .Values.global.n4network.enabled true) (eq .Values.config.n4if.enabled true) }}
+    {{- if and (eq .Values.global.n4network.enabled true) }}
     - dev: n4
     {{- else }}
     - dev: eth0
@@ -35,14 +35,14 @@ smf:
       - address: {{ default (printf "%s-upf-pfcp" $open5gsName) .Values.config.upf.pfcp.hostname }}
   gtpc:
     server:
-    {{- if and (eq .Values.global.n4network.enabled true) (eq .Values.config.n4if.enabled true) }}
+    {{- if and (eq .Values.global.n4network.enabled true) }}
     - dev: n4
     {{- else }}
     - dev: eth0
     {{- end }}
   gtpu:
     server:
-    {{- if and (eq .Values.global.n4network.enabled true) (eq .Values.config.n4if.enabled true) }}
+    {{- if and (eq .Values.global.n4network.enabled true) }}
     - dev: n4
     {{- else }}
     - dev: eth0

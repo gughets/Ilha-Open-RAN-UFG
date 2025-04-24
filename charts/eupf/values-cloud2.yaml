@@ -1,5 +1,3 @@
----
-
 global:
   imagePullPolicy: Always
   
@@ -22,34 +20,14 @@ global:
     cidr: 24
     gatewayIP: 10.21.2.109
     excludeIP: 10.21.2.109
-  n6network:
-    enabled: false
-    name: n6network
-    type: macvlan
-    masterIf: acesso
-    subnetIP: 10.21.0.0
-    cidr: 24
-    gatewayIP: 10.21.0.100
-    excludeIP: 10.21.0.100
-  n9network:
-    enabled: true
-    name: n9network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
-    cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
 
 # network paramters
+hostNetwork: false
 n3if:  # GTP-U
   ipAddress: 10.21.2.80
-n9if:  # GTP-U
-  ipAddress: 10.21.2.81
 n4if:  # PFCP
   ipAddress: 10.21.2.82
-n6if:  # DN
-  ipAddress: 10.21.0.83
+
 
 deploymentStrategy:
   type: Recreate  ## TODO: add it to other charts that use multus-cni :)
@@ -58,37 +36,42 @@ nodeSelector:
   kubernetes.io/hostname: oran-cloud2
 
 image:
-  # tag: 0ac3d9fb28808dbca7e123205323e2c09f377971@sha256:a03bdd30efa623b0d3ddc99d9a6472453a43d2d64ed715a9a042e893d82ffb68
   registry: ghcr.io
   repository: edgecomllc
   name: eupf
-  tag: 0.7.0
+  tag: 0.7.1
   pullPolicy: Always
 
 args:
   - --config
   - /app/conf/config.yml
 
-env:
-  UPF_INTERFACE_NAME: "n3,eth0"
-  UPF_XDP_ATTACH_MODE: generic
-  UPF_API_ADDRESS: ":8080"
-  UPF_PFCP_ADDRESS: 10.21.2.82:8805
-  UPF_PFCP_NODE_ID: 10.21.2.82
-  UPF_ASSOCIATION_SETUP_TIMEOUT: 5
-  UPF_METRICS_ADDRESS: :9090
-  UPF_N3_ADDRESS: 10.21.2.80
-  UPF_N9_ADDRESS: 10.21.2.81
-  UPF_FEATURE_UEIP: true
-  UPF_FEATURE_FTUP: true
-  UPF_UEIP_POOL: 10.45.0.0/16
-  UPF_TEID_POOL: 65535
-
 configMaps:
   config:
     data:
       config.yml: |
         logging_level: info
+        interface_name: [n3, eth0]
+        xdp_attach_mode: generic # native or offload
+        api_address: :8080
+        pfcp_address: 10.21.2.82:8805
+        pfcp_node_id: 10.21.2.82
+        association_setup_timeout: 5
+        metrics_address: :9090
+        n3_address: 10.21.2.80
+        gtp_echo_interval: 10
+        qer_map_size: 1024
+        far_map_size: 1024
+        urr_map_size: 1024
+        pdr_map_size: 1024
+        resize_ebpf_maps: false
+        heartbeat_retries: 3
+        heartbeat_interval: 5
+        heartbeat_timeout: 5
+        feature_ueip: true
+        feature_ftup: true
+        ueip_pool: 10.45.0.0/16
+        teid_pool: 65535
 
 volumes:
   - name: sys
@@ -111,13 +94,11 @@ volumeMounts:
     mountPath: /app/conf
 
 bird:
-  enabled: false
+  enabled: true
   image: docker.io/edgecom/bird:0.0.5
   env:
     BIRD_LOCAL_AS: 65001
     BIRD_LOCAL_PREFIX: 10.45.0.0/16
-  livenessProbe: null # FIXME: It's not working
-  readinessProbe: null # FIXME: It's not working
 
 metrics:
   enabled: false
@@ -129,9 +110,9 @@ metrics:
       port: metrics
       path: "/metrics"
 
-# podAnnotations:
-#   cni.projectcalico.org/ipv4pools: '["default-pool"]'
-#   cni.projectcalico.org/ipAddrs: '["172.17.100.2"]'
+podAnnotations:
+  cni.projectcalico.org/ipv4pools: '["default-pool"]'
+  cni.projectcalico.org/ipAddrs: '["172.2.0.100"]' # also change in the calico-bgp-ue-pool.yaml file
 
 podSecurityContext:
   sysctls:
@@ -141,7 +122,7 @@ podSecurityContext:
 securityContext:
   privileged: true
   capabilities:
-    add: ["NET_ADMIN"]
+    add: ["NET_ADMIN", "SYS_ADMIN"]
 
 extraContainerPorts:
   - name: gtpu
@@ -172,20 +153,17 @@ resources:
     cpu: 100m
     memory: 128Mi
 
-# FIXME: It's not working
-# livenessProbe:
-#   tcpSocket:
-#     host: localhost
-#     port: http
-#   initialDelaySeconds: 5
-#   periodSeconds: 10
+livenessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
 
-# readinessProbe:
-#   tcpSocket:
-#     host: localhost
-#     port: http
-#   initialDelaySeconds: 5
-#   periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
 
 ui:
   enabled: true
@@ -197,5 +175,3 @@ ui:
     pullPolicy: Always
   env:
     API_ADDR: localhost:8080
-  livenessProbe: null # FIXME: It's not working
-  readinessProbe: null # FIXME: It's not working

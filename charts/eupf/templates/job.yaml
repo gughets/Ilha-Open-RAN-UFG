@@ -3,6 +3,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "eupf.fullname" . }}-xdp-programm-install
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "eupf.labels" . | nindent 4 }}
   annotations:

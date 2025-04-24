@@ -1,80 +1,113 @@
----
-
 global:
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
+  
+  # Global network parametes
+  n3network:
+    enabled: true
+    name: n3network
+    type: macvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
+  n4network:
+    enabled: true
+    name: n4network
+    type: macvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
 
-replicaCount: 1
+# network paramters
+hostNetwork: false
+n3if:  # GTP-U
+  ipAddress: 10.21.2.80
+n4if:  # PFCP
+  ipAddress: 10.21.2.82
 
-# See `kubectl explain deployment.spec.strategy` for more
-# ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 deploymentStrategy:
-  type: RollingUpdate
+  type: Recreate  ## TODO: add it to other charts that use multus-cni :)
 
 deploymentType: deployment
 # deploymentType: statefulset
+
+nodeSelector: 
+  kubernetes.io/hostname: oran-cloud2
 
 image:
   registry: ghcr.io
   repository: edgecomllc
   name: eupf
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-  pullPolicy: IfNotPresent
+  tag: 0.7.1
+  pullPolicy: Always
 
-# Override default container command
-command: []
+args:
+  - --config
+  - /app/conf/config.yml
 
-# Override default container args
-args: []
+configMaps:
+  config:
+    data:
+      config.yml: |
+        logging_level: info
+        interface_name: [n3, eth0]
+        xdp_attach_mode: generic # native or offload
+        api_address: :8080
+        pfcp_address: 10.21.2.82:8805
+        pfcp_node_id: 10.21.2.82
+        association_setup_timeout: 5
+        metrics_address: :9090
+        n3_address: 10.21.2.80
+        gtp_echo_interval: 10
+        qer_map_size: 1024
+        far_map_size: 1024
+        urr_map_size: 1024
+        pdr_map_size: 1024
+        resize_ebpf_maps: false
+        heartbeat_retries: 3
+        heartbeat_interval: 5
+        heartbeat_timeout: 5
+        feature_ueip: true
+        feature_ftup: true
+        ueip_pool: 10.45.0.0/16
+        teid_pool: 65535
 
-initContainers: []
-  # - name: run-db-migrations
-  #   # if "" then uses default image for this chart
-  #   image: ""
-  #   command:
-  #     - /bin/sh
-  #     - -ec
-  #     - |
-  #       python3 manage.py migrate
-  # - name: run-something
-  #   image: ""
-  #   command:
-  #     - /bin/sh
-  #     - -ec
-  #     - |
-  #       echo "start something"
+volumes:
+  - name: sys
+    hostPath:
+      path: /sys
+  - name: config
+    configMap:
+      name: eupf-config
+      defaultMode: 420
+      items:
+        - key: config.yml
+          mode: 493
+          path: config.yml
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+volumeMounts:
+  - name: sys
+    mountPath: /sys
+    readOnly:  true
+  - name: config
+    mountPath: /app/conf
 
-# Additional environment variables
-env: {}
-  # foo: bar
-
-# create config maps
-configMaps: {}
-  # config:
-  #   additionalLabels:
-  #     foo: bar
-  #   additionalAnnotations:
-  #     foo: bar
-  #   data:
-  #     config.yml: |
-  #       foo: bar
-
-# volumes
-volumes: {}
-  # - name: config
-  #   configMap:
-  #     name: eupf-config
-
-# volume mounts
-volumeMounts: {}
-  # - name: config
-  #   mountPath: /app/conf
-
-hostNetwork: false
+bird:
+  enabled: true
+  image: docker.io/edgecom/bird:0.0.5
+  service:
+    enabled: false
+    type: ClusterIP
+    port: 179
+  env:
+    BIRD_ROUTER_ID: $(MY_POD_IP)
+    BIRD_NEIGHBOR_IP: $(MY_NODE_IP)
+    BIRD_NEIGHBOR_AS: 64512
+    BIRD_LOCAL_AS: 65001
+    BIRD_LOCAL_PREFIX: 10.45.0.0/16
 
 xdpProgrammInstall:
   enabled: false
@@ -106,41 +139,6 @@ xdpProgrammInstall:
       ls -alh /app ;\
       ip link set dev ${IFACE_NAME} xdpdrv obj /app/zeroentrypoint_bpf.o sec xdp/upf_zero_entrypoint
 
-bird:
-  enabled: false
-  image: docker.io/edgecom/bird:0.0.4
-  env:
-    BIRD_ROUTER_ID: $(MY_POD_IP)
-    BIRD_LOCAL_AS: 65000
-    BIRD_LOCAL_PREFIX: 10.45.0.0/16
-    BIRD_NEIGHBOR_IP: $(MY_NODE_IP)
-    BIRD_NEIGHBOR_AS: 64512
-  service:
-    enabled: false
-    type: ClusterIP
-    port: 179
-  ports:
-    - name: bgp
-      containerPort: 179
-      protocol: TCP
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  livenessProbe:
-    tcpSocket:
-      port: bgp
-    initialDelaySeconds: 5
-    periodSeconds: 10
-  readinessProbe:
-    tcpSocket:
-      port: bgp
-    initialDelaySeconds: 5
-    periodSeconds: 10
-
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -153,59 +151,47 @@ serviceAccount:
 metrics:
   enabled: false
   serviceMonitor:
-    # Create ServiceMonitor Resource for scraping metrics using Prometheus Operator
-    enabled: false
-    # Namespace for the ServiceMonitor Resource (defaults to the Release Namespace)
-    namespace: ""
-    # Interval at which metrics should be scraped.
-    # ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
-    interval: ""
-    # Timeout after which the scrape is ended
-    # ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
-    scrapeTimeout: ""
-    # Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
-    labels: {}
-    # Prometheus instance selector labels
-    # ref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration
-    selector: {}
-    # RelabelConfigs to apply to samples before scraping
-    relabelings: []
-    # MetricRelabelConfigs to apply to samples before ingestion
-    metricRelabelings: []
-    # Specify honorLabels parameter to add the scrape endpoint
-    honorLabels: false
-    # The name of the label on the target service to use as the job name in prometheus.
-    jobLabel: ""
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
     endpoints:
       port: metrics
       path: "/metrics"
 
-podAnnotations: {}
+podAnnotations:
+  cni.projectcalico.org/ipv4pools: '["default-pool"]'
+  cni.projectcalico.org/ipAddrs: '["172.2.0.100"]' # also change in the calico-bgp-ue-pool.yaml file
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  sysctls:
+  - name: net.ipv4.ip_forward
+    value: "1"
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  privileged: true
+  capabilities:
+    add: ["NET_ADMIN", "SYS_ADMIN"]
 
-extraContainerPorts: []
-  # - name: metrics
-  #   containerPort: 9090
-  #   protocol: TCP
+extraContainerPorts:
+  - name: gtpu
+    containerPort: 2152
+    protocol: UDP
+  - name: pfcp
+    containerPort: 8805
+    protocol: UDP
 
 service:
   type: ClusterIP
-  port: 80
-  extraPorts: []
-    # - port: 9090
-    #   targetPort: metrics
-    #   protocol: TCP
-    #   name: metrics
+  port: 8080
+  extraPorts:
+    - port: 2152
+      targetPort: gtpu
+      protocol: UDP
+      name: gtpu
+    - port: 8805
+      targetPort: pfcp
+      protocol: UDP
+      name: pfcp
 
 ingress:
   enabled: false
@@ -223,105 +209,35 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
-livenessProbe: {}
-  # We usually recommend to specify probes, read https://habr.com/ru/company/nixys/blog/544288/
-  # tcpSocket:
-  #   port: http
-  # initialDelaySeconds: 5
-  # periodSeconds: 10
+livenessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
 
-readinessProbe: {}
-  # We usually recommend to specify probes, read https://habr.com/ru/company/nixys/blog/544288/
-  # httpGet:
-  #   path: /healthz
-  #   port: http
-  # initialDelaySeconds: 5
-  # periodSeconds: 10
-
-startupProbe: {}
-  # We usually recommend to specify probes, read https://habr.com/ru/company/nixys/blog/544288/
-  # httpGet:
-  #   path: /healthz
-  #   port: http
-  # failureThreshold: 30
-  # periodSeconds: 10
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-# Array of extra objects to deploy with the release
-extraDeploy: []
-  # - apiVersion: k8s.cni.cncf.io/v1
-  #   kind: NetworkAttachmentDefinition
-  #   metadata:
-  #     name: n3network-upf
-  #     namespace: free5gc
-  #   spec:
-  #     config: |
-  #       {
-  #         "cniVersion": "0.3.1",
-  #         "plugins": [
-  #           {
-  #             "type": "ipvlan",
-  #             "capabilities": { "ips": true },
-  #             "master": "ens3",
-  #             "mode": "l2",
-  #             "ipam": {
-  #               "type": "static",
-  #               "routes": [
-  #                 {
-  #                   "dst": "0.0.0.0/0",
-  #                   "gw": "10.100.50.238"
-  #                 }
-  #               ]
-  #             }
-  #           }
-  #         ]
-  #       }
+readinessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
 
 ui:
-  enabled: false
+  enabled: true
   image:
     registry: ghcr.io
     repository: edgecomllc
     name: eupf-ui
-    tag: main
+    tag: 92294e11a733790ae2872dd1bc3128ce1a550734
     pullPolicy: Always
-  env:
-    API_ADDR: localhost:8080
   service:
     port: 8081
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  livenessProbe:
-    httpGet:
-      path: /healthz
-      port: 8081
-    initialDelaySeconds: 5
-    periodSeconds: 10
-  readinessProbe:
-    httpGet:
-      path: /healthz
-      port: 8081
-    initialDelaySeconds: 5
-    periodSeconds: 10
+  env:
+    API_ADDR: localhost:8080

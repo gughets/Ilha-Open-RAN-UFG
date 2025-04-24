@@ -2,7 +2,7 @@ dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
 global:
   # Global network parametes
-  n2network: 
+  n2network:
     enabled: true
     name: n2network
     type: macvlan
@@ -69,7 +69,6 @@ smf:
     tag: "2.7.5"
   config:
     n4if:
-      enabled: true
       ipAddress: "10.21.2.51"
     upf:
       pfcp:
@@ -117,8 +116,6 @@ upf:
       ipAddress: "10.21.2.52"
     n4if:
       ipAddress: "10.21.2.53"
-    n6if:
-      ipAddress: "10.21.0.150"
     upf:
       pfcp:
         dev: "n4" # if hostNetwork is false

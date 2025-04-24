@@ -31,7 +31,7 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
-        {{- if and (eq .Values.global.n4network.enabled true) (eq .Values.config.n4if.enabled true) }}
+        {{- if and (eq .Values.global.n4network.enabled true) }}
         k8s.v1.cni.cncf.io/networks: '[
             { "name": "{{ $.Values.global.n4network.name }}-open5gs-smf",
               "interface": "n4",

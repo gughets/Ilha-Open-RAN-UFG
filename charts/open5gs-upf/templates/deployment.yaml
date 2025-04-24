@@ -32,16 +32,20 @@ spec:
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
         k8s.v1.cni.cncf.io/networks: '[
+        {{- if and (eq .Values.global.n3network.enabled true) }}
             { "name": "{{ $.Values.global.n3network.name }}-open5gs-upf",
               "interface": "n3",
               "ips": [ "{{ .Values.config.n3if.ipAddress }}/{{ $.Values.global.n3network.cidr }}" ],
               "gateway": [ "{{ $.Values.global.n3network.gatewayIP }}" ]
             },
+        {{- end }}
+        {{- if and (eq .Values.global.n4network.enabled true) }}
             { "name": "{{ $.Values.global.n4network.name }}-open5gs-upf",
               "interface": "n4",
               "ips": [ "{{ .Values.config.n4if.ipAddress }}/{{ $.Values.global.n4network.cidr }}" ],
               "gateway": [ "{{ $.Values.global.n4network.gatewayIP }}" ]
             }
+        {{- end }}
             ]'
     spec:
       {{- include "open5gs.upf.imagePullSecrets" . | nindent 6 }}

@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "eupf.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "eupf.labels" . | nindent 4 }}
 spec:

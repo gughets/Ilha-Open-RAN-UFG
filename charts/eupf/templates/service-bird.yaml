@@ -4,6 +4,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "eupf.fullname" . }}-bird
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "eupf.labels" . | nindent 4 }}
 spec:

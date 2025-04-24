@@ -21,7 +21,7 @@ cd open5gs
 Install the core network with Helm
 
 ```sh
-helm upgrade --install open5gs -n open5gs --create-namespace charts/open5gs --version 2.2.6 -f ./values/values-cloud5.yaml
+helm upgrade --install open5gs -n open5gs --create-namespace charts/open5gs -f ./values/values-cloud2.yaml
 ```
 
 > **_NOTE_**: nodeSelector is `kubernetes.io/hostname: oran-cloud5`, change it if necessary.
@@ -40,4 +40,9 @@ helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 
 ## FIXME
 
-- UEs do not access 5GC host services
+- UEs doesn't access 5GC host services;
+- SRSUE doesn't work with multiple TACs in AMF configuration;
+
+## TODO
+
+- Configure eUPF native mode;

@@ -12,25 +12,17 @@ global:
 upf:
   pfcp:
     server:
-    {{- if .Values.config.upf.pfcp.dev }}
     - dev: {{ default "eth0" .Values.config.upf.pfcp.dev }}
       {{- if .Values.config.upf.pfcp.advertise }}
       advertise: "{{ tpl .Values.config.upf.pfcp.advertise . }}"
       {{- end }}
-    {{- else }}
-    - address: {{ default "127.0.0.7" .Values.config.upf.pfcp.addr }}
-    {{- end }}
     client:
   gtpu:
     server:
-    {{- if .Values.config.upf.gtpu.dev }}
     - dev: {{ default "eth0" .Values.config.upf.gtpu.dev }}
       {{- if .Values.config.upf.gtpu.advertise }}
       advertise: "{{ tpl .Values.config.upf.gtpu.advertise . }}"
       {{- end }}
-    {{- else }}
-    - address: {{ default "127.0.0.7" .Values.config.upf.gtpu.addr }}
-    {{- end }}
   session:
     {{- range .Values.config.subnetList }}
     - {{- omit . "mask" "createDev" "enableNAT" | toYaml | nindent 6 }}

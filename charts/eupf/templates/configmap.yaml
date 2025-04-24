@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "eupf.fullname" $all }}-{{ $k }}
+  name: {{ include "eupf.name" $all }}-{{ $k }}
   labels:
     {{- include "eupf.labels" $ | nindent 4 }}
     {{- if $v.additionalLabels }}

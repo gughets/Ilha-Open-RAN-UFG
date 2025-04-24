@@ -15,6 +15,15 @@ global:
   ##
   imagePullSecrets: []
   storageClass: ""
+  n2network:
+    enabled: false
+    name: n2network
+    type: macvlan
+    masterIf: vlan3225.p4_1
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.109
+    excludeIP: 10.21.2.109
 
 ## @section Common parameters
 
