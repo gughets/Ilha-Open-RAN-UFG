@@ -1,5 +1,35 @@
 dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
+global:
+  # Global network parametes
+  n2network:
+    enabled: false
+    name: n2network
+    type: macvlan
+    masterIf: dados
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.2
+    excludeIP: 10.21.2.2
+  n3network:
+    enabled: false
+    name: n3network
+    type: macvlan
+    masterIf: dados
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.2
+    excludeIP: 10.21.2.2
+  n4network:
+    enabled: false
+    name: n4network
+    type: macvlan
+    masterIf: dados
+    subnetIP: 10.21.2.0
+    cidr: 24
+    gatewayIP: 10.21.2.2
+    excludeIP: 10.21.2.2
+
 populate:
   enabled: true
   image:
