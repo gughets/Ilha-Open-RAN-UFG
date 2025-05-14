@@ -2,33 +2,33 @@ dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
 global:
   # Global network parametes
-  n2network: 
+  n2network:
     enabled: true
     name: n2network
     type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    masterIf: enp1s0
+    subnetIP: 10.19.0.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.19.0.1
+    excludeIP: 10.19.0.117
   n3network:
     enabled: true
     name: n3network
     type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    masterIf: enp1s0
+    subnetIP: 10.19.0.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.19.0.1
+    excludeIP: 10.19.0.117
   n4network:
     enabled: true
     name: n4network
     type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    masterIf: enp1s0
+    subnetIP: 10.19.0.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.19.0.1
+    excludeIP: 10.19.0.117
 
 populate:
   enabled: true
@@ -38,14 +38,11 @@ populate:
     tag: 0.10.3
     pullPolicy: IfNotPresent
   initCommands:
-  # example of initCommands:
+  # example of initCommands: IMSI - Key - OPc - DNN - SST - SD
   #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
   #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
   #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
-    - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CPE
-    - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CELLPHONE-1
-    - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 FFFFFF # CELLPHONE-2
-    - open5gs-dbctl add_ue_with_slice 901700000041596 C27D1C24D7AEA00A71C8868007D6B3F7 87D0D9F22D90EF6C7933494C872D2897 oranbr 1 FFFFFF # RASP-1
+    - open5gs-dbctl add_ue_with_slice 999990000000008 0CB5DB1818B1302289DD02C262169359 0E585463F4BCDAA65ABA6EE50D25895B oranbr 1 FFFFFF # Smartphone
 
 # Common
 mongodb:
@@ -57,33 +54,26 @@ mongodb:
   global:
     storageClass: openebs-hostpath
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 smf:
   enabled: true
   updateStrategy:
-    type: Recreate  
+    type: Recreate
+  livenessProbe:
+    enabled: false
+  readinessProbe:
+    enabled: false
   image:
     registry: docker.io
     repository: gradiant/open5gs
     tag: "2.7.5"
-  podSecurityContext:
-    enabled: true
-    fsGroup: 0
-  containerSecurityContext:
-    enabled: true
-    runAsUser: 0
-    runAsNonRoot: false
-    privileged: true
-    capabilities:
-      add: ["NET_ADMIN"]
   config:
     n4if:
-      enabled: true
-      ipAddress: "10.21.2.51"
+      ipAddress: "10.19.0.181"
     upf:
       pfcp:
-        hostname: "10.21.2.82"
+        hostname: "10.19.0.183"
         port: 8805
     pcrf:
       enabled: false
@@ -96,16 +86,16 @@ smf:
       - subnet: 10.45.0.0/16
         gateway: 10.45.0.1
         dnn: oranbr
-  mtu: 1500
+    mtu: 1450
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 # TODO
 eupf:
   enabled: false
 
 upf:
-  enabled: false
+  enabled: true
   updateStrategy:
     type: Recreate
   image:
@@ -124,11 +114,9 @@ upf:
   config:
     hostNetwork: false ## Needed to connect N3/GTP-U in multi-cluster scenario
     n3if:
-      ipAddress: "10.21.2.52"
+      ipAddress: "10.19.0.182"
     n4if:
-      ipAddress: "10.21.2.53"
-    n6if:
-      ipAddress: "10.21.0.150"
+      ipAddress: "10.19.0.183"
     upf:
       pfcp:
         dev: "n4" # if hostNetwork is false
@@ -145,7 +133,7 @@ upf:
       createDev: true
       enableNAT: true
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 webui:
   enabled: true
@@ -159,7 +147,7 @@ webui:
       nodePorts:
         http: "30999"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 # 4G (disabled)
 hss:
@@ -178,6 +166,10 @@ amf:
   enabled: true
   updateStrategy:
     type: Recreate  
+  livenessProbe:
+    enabled: false
+  readinessProbe:
+    enabled: false
   image:
     registry: docker.io
     repository: gradiant/open5gs
@@ -185,7 +177,7 @@ amf:
   config:
     logLevel: info
     n2if:
-      ipAddress: "10.21.2.50"
+      ipAddress: "10.19.0.180"
     guamiList:
       - plmn_id:
           mcc: "001"
@@ -194,8 +186,8 @@ amf:
           region: 1
           set: 1
       - plmn_id:
-          mcc: "901"
-          mnc: "70"
+          mcc: "999"
+          mnc: "99"
         amf_id:
           region: 1
           set: 1
@@ -205,8 +197,8 @@ amf:
           mnc: "01"
         tac: [1]
       - plmn_id:
-          mcc: "901"
-          mnc: "70"
+          mcc: "999"
+          mnc: "99"
         tac: [1]
     plmnList:
       - plmn_id:
@@ -215,9 +207,15 @@ amf:
         s_nssai:
           - sst: 1
             sd: "0xFFFFFF"
-    networkName: OPENRANBR-2
+      - plmn_id:
+          mcc: "999"
+          mnc: "99"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+    networkName: OPENRANBR-5GS
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 ausf:
   enabled: true
@@ -226,7 +224,7 @@ ausf:
     repository: gradiant/open5gs
     tag: "2.7.5"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 bsf:
   enabled: true
@@ -235,7 +233,7 @@ bsf:
     repository: gradiant/open5gs
     tag: "2.7.5"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 nrf:
   enabled: true
@@ -250,10 +248,10 @@ nrf:
           mcc: "001"
           mnc: "01"
       - plmn_id:
-          mcc: "901"
-          mnc: "70"
+          mcc: "999"
+          mnc: "99"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 nssf:
   enabled: true
@@ -267,7 +265,7 @@ nssf:
         sst: 1
         sd: "0xFFFFFF"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 pcf:
   enabled: true
@@ -278,7 +276,7 @@ pcf:
   mongodb:
     enabled: false
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 scp:
   enabled: true
@@ -289,7 +287,7 @@ scp:
   mongodb:
     enabled: false
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
 
 udm:
   enabled: true
@@ -298,7 +296,7 @@ udm:
     repository: gradiant/open5gs
     tag: "2.7.5"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
     
 udr:
   enabled: true
@@ -307,4 +305,4 @@ udr:
     repository: gradiant/open5gs
     tag: "2.7.5"
   nodeSelector:
-    kubernetes.io/hostname: oran-cloud2
+    kubernetes.io/hostname: core
