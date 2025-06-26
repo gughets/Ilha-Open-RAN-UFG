@@ -2,33 +2,33 @@ dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
 global:
   # Global network parametes
-  n2network: 
+  n2network:
     enabled: true
     name: n2network
-    type: macvlan
+    type: ipvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.21.2.203
+    excludeIP: 10.21.2.203
   n3network:
     enabled: true
     name: n3network
-    type: macvlan
+    type: ipvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.21.2.203
+    excludeIP: 10.21.2.203
   n4network:
     enabled: true
     name: n4network
-    type: macvlan
+    type: ipvlan
     masterIf: dados
     subnetIP: 10.21.2.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    gatewayIP: 10.21.2.203
+    excludeIP: 10.21.2.203
 
 populate:
   enabled: true
@@ -72,7 +72,7 @@ smf:
       ipAddress: "10.21.2.55"
     upf:
       pfcp:
-        hostname: "10.21.2.57"
+        hostname: "10.21.2.56"
         port: 8805
     pcrf:
       enabled: false
@@ -102,17 +102,17 @@ upf:
     repository: gradiant/open5gs
     tag: "2.7.5"
   config:
-    hostNetwork: false ## Needed to connect N3/GTP-U in multi-cluster scenario
+    hostNetwork: false
     n3if:
-      ipAddress: "10.21.2.56"
-    n4if:
       ipAddress: "10.21.2.57"
+    n4if:
+      ipAddress: "10.21.2.56"
     upf:
       pfcp:
-        dev: "n4" # if hostNetwork is false
+        dev: "n4"
         # addr: "10.21.2.2"
       gtpu:
-        dev: "n3" # if hostNetwork is false
+        dev: "n3"
         # addr: "10.21.2.2"
     subnetList:
     - subnet: 10.45.0.0/16

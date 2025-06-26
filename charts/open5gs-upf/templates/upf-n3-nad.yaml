@@ -27,10 +27,16 @@ spec:
           "mode": "bridge",
 {{- end }}
 {{- if eq .Values.global.n3network.type "ipvlan" }}
-          "mode": "l2",
+          "mode": "l3",
 {{- end }}
           "ipam": {
-            "type": "static"
+            "type": "static",
+            "routes": [
+              {
+                "dst": "{{ .Values.global.n3network.subnetIP }}/{{ .Values.global.n3network.cidr }}",
+                "gw": "{{ .Values.global.n3network.gatewayIP }}"
+              }
+            ]
           }
         }
 {{- if eq .Values.global.n3network.type "macvlan" -}}
