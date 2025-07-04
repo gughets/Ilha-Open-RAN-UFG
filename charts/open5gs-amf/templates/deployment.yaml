@@ -31,13 +31,12 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
-        {{- if $.Values.global.n2network.enabled}}
-        k8s.v1.cni.cncf.io/networks: '[
-            { "name": "{{ $.Values.global.n2network.name }}-open5gs-amf",
-              "interface": "n2",
-              "ips": [ "{{ $.Values.config.n2if.ipAddress }}/{{ $.Values.global.n2network.cidr }}" ],
-              "gateway": [ "{{ $.Values.global.n2network.gatewayIP }}" ]
-            }]'
+        {{- if $.Values.global.n2network.enabled }}
+        k8s.v1.cni.cncf.io/networks: '[{
+          "name": "{{ $.Values.global.n2network.name }}-open5gs-amf",
+          "interface": "n2",
+          "ips": [ "{{ $.Values.config.n2if.ipAddress }}/{{ $.Values.global.n2network.cidr }}" ]
+        }]'
         {{- end }}
     spec:
       {{- include "open5gs.amf.imagePullSecrets" . | nindent 6 }}
@@ -154,9 +153,21 @@ spec:
           {{- else if .Values.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.resources }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
-          {{- end }}
+          resources:
+            requests:
+              {{- if eq .Values.global.n2network.type "sriov" }}
+              intel.com/intel_sriov_netdevice: '1'
+              {{- end }}
+              {{- if .Values.resources.requests }}
+              {{- toYaml .Values.resources.requests | nindent 12 }}
+              {{- end }}
+            limits:
+              {{- if eq .Values.global.n2network.type "sriov" }}
+              intel.com/intel_sriov_netdevice: '1'
+              {{- end }}
+              {{- if .Values.resources.requests }}
+              {{- toYaml .Values.resources.limits | nindent 12 }}
+              {{- end }}
           volumeMounts:
             - name: config
               mountPath:  /opt/open5gs/etc/open5gs/amf.yaml

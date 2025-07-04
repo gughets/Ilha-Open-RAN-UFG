@@ -31,22 +31,19 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
-        k8s.v1.cni.cncf.io/networks: '[
-        {{- if and (eq .Values.global.n3network.enabled true) }}
-            { "name": "{{ $.Values.global.n3network.name }}-open5gs-upf",
+        k8s.v1.cni.cncf.io/networks: |
+          [
+          {{- $first := true }}
+          {{- if $.Values.global.n3network.enabled }}
+            {{- if not $first }},{{- end }}
+            {{- $first = false }}
+            {
+              "name": "{{ $.Values.global.n3network.name }}-open5gs-upf",
               "interface": "n3",
-              "ips": [ "{{ .Values.config.n3if.ipAddress }}/{{ $.Values.global.n3network.cidr }}" ],
-              "gateway": [ "{{ $.Values.global.n3network.gatewayIP }}" ]
-            },
-        {{- end }}
-        {{- if and (eq .Values.global.n4network.enabled true) }}
-            { "name": "{{ $.Values.global.n4network.name }}-open5gs-upf",
-              "interface": "n4",
-              "ips": [ "{{ .Values.config.n4if.ipAddress }}/{{ $.Values.global.n4network.cidr }}" ],
-              "gateway": [ "{{ $.Values.global.n4network.gatewayIP }}" ]
+              "ips": [ "{{ $.Values.config.n3if.ipAddress }}/{{ $.Values.global.n3network.cidr }}" ]
             }
-        {{- end }}
-            ]'
+          {{- end }}      
+          ]
     spec:
       {{- include "open5gs.upf.imagePullSecrets" . | nindent 6 }}
       hostNetwork: {{ .Values.config.hostNetwork }}
@@ -152,9 +149,21 @@ spec:
           {{- if .Values.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
           {{- end }}
-          {{- if .Values.resources }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
-          {{- end }}
+          resources:
+            requests:
+              {{- if eq .Values.global.n3network.type "sriov" }}
+              intel.com/intel_sriov_netdevice: '1'
+              {{- end }}
+              {{- if .Values.resources.requests }}
+              {{- toYaml .Values.resources.requests | nindent 12 }}
+              {{- end }}
+            limits:
+              {{- if eq .Values.global.n3network.type "sriov" }}
+              intel.com/intel_sriov_netdevice: '1'
+              {{- end }}
+              {{- if .Values.resources.requests }}
+              {{- toYaml .Values.resources.limits | nindent 12 }}
+              {{- end }}
           volumeMounts:
             - name: config
               mountPath:  /opt/open5gs/etc/open5gs/upf.yaml

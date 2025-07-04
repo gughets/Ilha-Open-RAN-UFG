@@ -5,10 +5,11 @@
 - Kubernetes (1.28 or newer)
 - Helm v3
 - OpenEBS Storage Class
+- sriov-cni and sriov-network-device-plugin (to use sr-iov with multus)
 
 ## Getting Started
 
-### Open5GS K8s Deployment
+### Open5GS K8s Deployment with Helm
 
 Clone the repository
 
@@ -32,7 +33,7 @@ The Open5GS GUI will be available at http://[open5gs-node-IP]:30999
 - password: 1423
 
 
-## Clean up
+### Clean up
 
 ```sh
 helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
@@ -45,4 +46,4 @@ helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 
 ## TODO
 
-- Configure eUPF native mode;
+- Configure eUPF with Open5gs (not yet functional);
