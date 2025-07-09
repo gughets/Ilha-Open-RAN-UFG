@@ -155,17 +155,17 @@ spec:
           {{- end }}
           resources:
             requests:
-              {{- if eq .Values.global.n2network.type "sriov" }}
+              {{- if and .Values.global.n2network.enabled (eq .Values.global.n2network.type "sriov") }}
               intel.com/intel_sriov_netdevice: '1'
               {{- end }}
               {{- if .Values.resources.requests }}
               {{- toYaml .Values.resources.requests | nindent 12 }}
               {{- end }}
             limits:
-              {{- if eq .Values.global.n2network.type "sriov" }}
+              {{- if and .Values.global.n2network.enabled (eq .Values.global.n2network.type "sriov") }}
               intel.com/intel_sriov_netdevice: '1'
               {{- end }}
-              {{- if .Values.resources.requests }}
+              {{- if .Values.resources.limits }}
               {{- toYaml .Values.resources.limits | nindent 12 }}
               {{- end }}
           volumeMounts:

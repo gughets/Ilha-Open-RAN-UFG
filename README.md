@@ -41,7 +41,6 @@ helm uninstall -n open5gs open5gs && kubectl delete ns open5gs
 
 ## FIXME
 
-- UEs doesn't access 5GC host services;
 - SRSUE doesn't work with multiple TACs in AMF configuration;
 
 ## TODO
