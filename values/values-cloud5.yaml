@@ -5,30 +5,19 @@ global:
   n2network:
     enabled: true
     name: n2network
-    type: ipvlan
+    type: sriov
     masterIf: dados
-    subnetIP: 10.21.2.0
+    subnetIP: 10.21.1.0
     cidr: 24
-    gatewayIP: 10.21.2.203
-    excludeIP: 10.21.2.203
+    vlan: 3225 # sriov only
   n3network:
     enabled: true
     name: n3network
-    type: ipvlan
+    type: sriov
     masterIf: dados
-    subnetIP: 10.21.2.0
+    subnetIP: 10.21.1.0
     cidr: 24
-    gatewayIP: 10.21.2.203
-    excludeIP: 10.21.2.203
-  n4network:
-    enabled: true
-    name: n4network
-    type: ipvlan
-    masterIf: dados
-    subnetIP: 10.21.2.0
-    cidr: 24
-    gatewayIP: 10.21.2.203
-    excludeIP: 10.21.2.203
+    vlan: 3225 # sriov only
 
 populate:
   enabled: true
@@ -38,7 +27,7 @@ populate:
     tag: 0.10.3
     pullPolicy: IfNotPresent
   initCommands:
-  # example of initCommands:
+  # example of initCommands: IMSI - Key - OPc - DNN - SST - SD
   #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
   #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
   #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
@@ -66,14 +55,12 @@ smf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
-    n4if:
-      ipAddress: "10.21.2.55"
-    upf:
-      pfcp:
-        hostname: "10.21.2.56"
-        port: 8805
+    # upf:
+    #   pfcp:
+    #     hostname: "open5gs-upf-pfcp"
+    #     port: 8805
     pcrf:
       enabled: false
     dnsList:
@@ -92,7 +79,7 @@ smf:
 # TODO
 eupf:
   enabled: false
-  
+
 upf:
   enabled: true
   updateStrategy:
@@ -100,20 +87,26 @@ upf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
+  podSecurityContext:
+    enabled: true
+    fsGroup: 0
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 0
+    privileged: true
+    capabilities:
+      add: ["NET_ADMIN"]
   config:
     hostNetwork: false
     n3if:
-      ipAddress: "10.21.2.57"
-    n4if:
-      ipAddress: "10.21.2.56"
+      ipAddress: "10.21.1.56"
     upf:
       pfcp:
-        dev: "n4"
-        # addr: "10.21.2.2"
+        dev: "eth0"
+        advertise: "open5gs-upf-pfcp"
       gtpu:
         dev: "n3"
-        # addr: "10.21.2.2"
     subnetList:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
@@ -130,7 +123,7 @@ webui:
   image:
     registry: docker.io
     repository: gradiant/open5gs-webui
-    tag: "2.7.5"
+    tag: "2.7.6"
   services:
     http:
       type: "NodePort"
@@ -154,16 +147,27 @@ sgwu:
 # 5G
 amf:
   enabled: true
+  livenessProbe:
+    enabled: false ## FIXME
+  readinessProbe:
+    enabled: false ## FIXME
   updateStrategy:
     type: Recreate  
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 0
+    runAsNonRoot: false
+    privileged: true
+    capabilities:
+      add: ["NET_ADMIN"]
   config:
     logLevel: info
     n2if:
-      ipAddress: "10.21.2.54"
+      ipAddress: "10.21.1.54"
     guamiList:
       - plmn_id:
           mcc: "001"
@@ -208,7 +212,7 @@ ausf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5
 
@@ -217,7 +221,7 @@ bsf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5
 
@@ -226,7 +230,7 @@ nrf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
     logLevel: info
     servingList:
@@ -244,7 +248,7 @@ nssf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
     nsiList:
       - uri: ""
@@ -258,7 +262,7 @@ pcf:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   mongodb:
     enabled: false
   nodeSelector:
@@ -269,7 +273,7 @@ scp:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   mongodb:
     enabled: false
   nodeSelector:
@@ -280,7 +284,7 @@ udm:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5
     
@@ -289,6 +293,6 @@ udr:
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   nodeSelector:
     kubernetes.io/hostname: oran-cloud5

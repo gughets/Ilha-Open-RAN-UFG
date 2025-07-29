@@ -19,7 +19,8 @@ ip addr add {{ .gateway }}/{{ .mask }} dev {{ .dev }};
 sysctl -w net.ipv4.ip_forward=1;
 {{- if .enableNAT }}
 echo "Enable NAT for {{ .subnet }} and device {{ .dev }}"
-iptables -t nat -A POSTROUTING -s {{ .subnet }} ! -o {{ .dev }} -j MASQUERADE;
+iptables -t nat -A POSTROUTING -s {{ .subnet }} ! -o {{ .dev }} -j MASQUERADE; # UE -> internet
+iptables -A FORWARD -i {{ .dev }} -o {{ .dev }} -s {{ .subnet }} -d {{ .subnet }} -j ACCEPT; # UE -> UE
 {{- end }}
 {{- end }}
 {{- end }}
