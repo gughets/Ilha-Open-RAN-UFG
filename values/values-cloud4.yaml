@@ -85,7 +85,7 @@ smf:
       - subnet: 10.45.0.0/16
         gateway: 10.45.0.1
         dnn: oranbr
-    mtu: 1450
+    mtu: 1500
   nodeSelector:
     kubernetes.io/hostname: oran-cloud4
 
