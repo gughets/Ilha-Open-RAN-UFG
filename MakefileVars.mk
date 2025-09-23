@@ -1,0 +1,9 @@
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[1;33m
+CYAN=\033[0;34m
+END=\033[0m # No Color (reset)
+
+VPP_UPF_IMAGE_REPO ?= muriloavlis
+VPP_UPF_IMAGE ?= vpp-upf
+VPP_UPF_IMAGE_TAG ?= v22.10.1

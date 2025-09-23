@@ -1,0 +1,125 @@
+# Args for versions
+ARG VPP_VERSION=22.10.1
+ARG FPP_VPP_VERSION=22.10.14
+ARG UPG_VPP_VERSION=1.13.1
+
+# ============================
+# Stage 1: Build
+# ============================
+FROM ubuntu:22.04 AS builder
+
+ARG VPP_VERSION
+ARG FPP_VPP_VERSION
+
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    meson \
+    ninja-build \
+    libhyperscan-dev \
+    sudo \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    clang \
+    clang-format \
+    libffi-dev \
+    pkg-config \
+    cmake \
+    wget \
+    curl
+
+# Clone FPP-VPP patches
+RUN git clone https://github.com/travelping/fpp-vpp.git && \
+    cd fpp-vpp && git checkout refs/tags/v${FPP_VPP_VERSION}
+
+# Clone VPP, apply patches and build
+RUN git clone https://github.com/FDio/vpp.git && \
+    cd vpp && git checkout refs/tags/v${VPP_VERSION} && \
+    git apply ../fpp-vpp/vpp-patches/*.patch && \
+    sed -i 's|http://github.com|https://github.com|g' build/external/packages/*.mk && \
+    make UNATTENDED=y install-dep && \
+    make UNATTENDED=y install-ext-deps && \
+    make -j$(nproc) UNATTENDED=y build-release && \
+    make pkg-deb-debug
+
+# ============================
+# Stage 2: Install VPP plugins
+# ============================
+
+FROM ubuntu:22.04 AS vpp-plugins
+
+ARG UPG_VPP_VERSION
+
+WORKDIR /
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    meson \
+    ninja-build \
+    libhyperscan-dev \
+    libnl-route-3-200 \
+    libnuma1 \
+    libnuma-dev \
+    libpcap0.8 \
+    libelf1
+
+RUN apt-get update && apt-get install -y python3 python3-pip \
+    && pip3 install ply
+
+COPY --from=builder /vpp/build-root/*.deb /
+
+RUN dpkg -i /libvpp*.deb && dpkg -i /vpp*.deb && dpkg -i /python3-vpp*.deb
+
+# Build UPG-VPP
+COPY patches/gtp_ext_hdr_qfi_1.patch /
+RUN git clone https://github.com/travelping/upg-vpp.git && \
+    cd upg-vpp && git checkout refs/tags/v${UPG_VPP_VERSION} && \
+    git apply /gtp_ext_hdr_qfi_1.patch && \
+    make version && \
+    mkdir build && cd build && \
+    cmake .. && \
+    make -j$(nproc) && make package
+
+# ============================
+# Stage 3: Runtime
+# ============================
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /etc/vpp
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    python3 \
+    libhyperscan-dev \
+    libnl-route-3-200 \
+    libnuma1 \
+    libnuma-dev \
+    libpcap0.8 \
+    libelf1 \
+    nano
+
+# Install VPP from builder
+COPY --from=builder /vpp/build-root/*.deb /
+RUN dpkg -i /libvpp*.deb && dpkg -i /vpp*.deb && dpkg -i /python3-vpp*.deb
+
+# Install UPG-VPP from vpp-plugins
+COPY --from=vpp-plugins /upg-vpp/build/*.deb /
+RUN dpkg -i /upf-plugin*.deb && rm -f /*.deb && ln -s /usr/local/lib/vpp_plugins/upf_plugin.so /usr/lib/x86_64-linux-gnu/vpp_plugins/upf_plugin.so
+
+# Copy configuration files and disable test plugins
+RUN ldconfig && mkdir -p /var/log/vpp/ && mv /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins.disabled
+COPY docker/config/upf-init.conf /etc/vpp/init.conf
+COPY docker/config/vpp-startup.conf /etc/vpp/startup.conf
+
+CMD [ "-c", "/etc/vpp/startup.conf" ]
+ENTRYPOINT ["vpp"]
