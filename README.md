@@ -22,7 +22,7 @@ cd open5gs
 Install the core network with Helm
 
 ```sh
-helm upgrade --install open5gs -n open5gs --create-namespace charts/open5gs -f ./values/values-cloud2.yaml
+helm upgrade --install open5gs -n open5gs --create-namespace charts/open5gs -f ./charts/open5gs/values/values-cloud2.yaml
 ```
 
 > **_NOTE_**: nodeSelector is `kubernetes.io/hostname: oran-cloud5`, change it if necessary.
