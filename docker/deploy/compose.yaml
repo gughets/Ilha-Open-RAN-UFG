@@ -3,14 +3,18 @@ services:
     container_name: vpp-upf
     image: muriloavlis/vpp-upf:v22.10.1
     privileged: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
     devices:
-      - /sys/bus/pci/devices/0000:b1:02.0:/sys/bus/pci/devices/0000:b1:02.0
-      - /sys/bus/pci/devices/0000:b1:02.1:/sys/bus/pci/devices/0000:b1:02.1
-      - /sys/bus/pci/devices/0000:b1:02.2:/sys/bus/pci/devices/0000:b1:02.2
+      - /dev/vfio/vfio
+      - /dev/vfio/263
+      - /dev/vfio/264
+      - /dev/vfio/265
+      - /dev/hugepages
     volumes:
       - ../config/upf-init.conf:/etc/vpp/init.conf
       - ../config/vpp-startup.conf:/etc/vpp/startup.conf
-      - /mnt/huge:/dev/hugepages
     restart: unless-stopped
 
   dn-gateway:
