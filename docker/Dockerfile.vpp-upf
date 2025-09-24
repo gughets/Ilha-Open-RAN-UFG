@@ -117,7 +117,8 @@ COPY --from=vpp-plugins /upg-vpp/build/*.deb /
 RUN dpkg -i /upf-plugin*.deb && rm -f /*.deb && ln -s /usr/local/lib/vpp_plugins/upf_plugin.so /usr/lib/x86_64-linux-gnu/vpp_plugins/upf_plugin.so
 
 # Copy configuration files and disable test plugins
-RUN ldconfig && mkdir -p /var/log/vpp/ && mv /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins.disabled
+RUN ldconfig && mkdir -p /var/log/vpp/ && \
+    mv /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins.disabled
 COPY docker/config/upf-init.conf /etc/vpp/init.conf
 COPY docker/config/vpp-startup.conf /etc/vpp/startup.conf
 

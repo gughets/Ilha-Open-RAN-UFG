@@ -11,10 +11,10 @@ services:
       - /dev/vfio/263
       - /dev/vfio/264
       - /dev/vfio/265
-      - /dev/hugepages
     volumes:
       - ../config/upf-init.conf:/etc/vpp/init.conf
       - ../config/vpp-startup.conf:/etc/vpp/startup.conf
+      - /dev/hugepages:/dev/hugepages
     restart: unless-stopped
 
   dn-gateway:
