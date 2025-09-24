@@ -106,7 +106,9 @@ RUN apt-get update && apt-get install -y \
     libnuma-dev \
     libpcap0.8 \
     libelf1 \
-    nano
+    nano \
+    net-tools \
+    iproute2
 
 # Install VPP from builder
 COPY --from=builder /vpp/build-root/*.deb /
