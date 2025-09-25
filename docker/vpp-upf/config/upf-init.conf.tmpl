@@ -6,32 +6,32 @@ ip6 table add 2
 
 # N3
 set interface ip table n3 0
-set interface mtu {{N3_MTU}} n3
-set interface ip address n3 {{N3_IP}}/{{N3_CIDR}}
+set interface mtu ${N3_MTU} n3
+set interface ip address n3 ${N3_IP}/${N3_CIDR}
 set interface state n3 up
 
 # N4
 set interface ip table n4 1
-set interface mtu {{N4_MTU}} n4
-set interface ip address n4 {{N4_IP}}/{{N4_CIDR}}
+set interface mtu ${N4_MTU} n4
+set interface ip address n4 ${N4_IP}/${N4_CIDR}
 set interface state n4 up
 
 # N6
 set interface ip table n6 2
-set interface mtu {{N6_MTU}} n6
-set interface ip address n6 {{N6_IP}}/{{N6_CIDR}}
+set interface mtu ${N6_MTU} n6
+set interface ip address n6 ${N6_IP}/${N6_CIDR}
 set interface state n6 up
 
 # Default route for N6
-ip route add 0.0.0.0/0 table 2 via {{N6_GATEWAY}} n6
+ip route add 0.0.0.0/0 table 2 via ${N6_GATEWAY} n6
 
 # PFCP configuration
-upf pfcp endpoint ip {{N4_IP}} vrf 1
-upf node-id fqdn {{NODE_ID}}
+upf pfcp endpoint ip ${N4_IP} vrf 1
+upf node-id fqdn ${NODE_ID}
 
 # NWI configuration
-upf nwi name {{N3_NWI}} vrf 0
+upf nwi name ${N3_NWI} vrf 0
 
 # GTP-U configuration
 upf specification release 16
-upf gtpu endpoint ip {{N3_IP}} nwi {{N3_NWI}} teid 0x000004d2/2
+upf gtpu endpoint ip ${N3_IP} nwi ${N3_NWI} teid 0x000004d2/2

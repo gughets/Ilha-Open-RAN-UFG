@@ -13,13 +13,13 @@ api-trace {
 }
 
 cpu {
-  main-core {{MAIN_CORE}}
-  corelist-workers {{WORKER_CORES}}
+  main-core ${MAIN_CORE}
+  corelist-workers ${WORKER_CORES}
 }
 
 memory {
 	# Set the main heap size, default is 1G
-	main-heap-size {{MAIN_HEAP_SIZE}}
+	main-heap-size ${MAIN_HEAP_SIZE}
 	main-heap-page-size default-hugepage
 	# Set the default huge page size.
 	default-hugepage-size 1G
@@ -30,17 +30,17 @@ api-segment {
 }
 
 dpdk {
-  dev {{N3_PCI}} {name n3}
-  dev {{N4_PCI}} {name n4}
-  dev {{N6_PCI}} {name n6}
-    
-  max-simd-bitwidth {{MAX_SIMD_BITWIDTH}}  # get support info with: grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
+  dev ${N3_PCI} {name n3}
+  dev ${N4_PCI} {name n4}
+  dev ${N6_PCI} {name n6}
+
+  max-simd-bitwidth ${MAX_SIMD_BITWIDTH}  # get support info with: grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
 }
 
 # node variant defaults
 node {
-	default	{ variant {{NODE_VARIANT}} }
-	ip4-rewrite { variant {{NODE_VARIANT}} }
+	default	{ variant ${NODE_VARIANT} }
+	ip4-rewrite { variant ${NODE_VARIANT} }
 }
 
 plugins {
