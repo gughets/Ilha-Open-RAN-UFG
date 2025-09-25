@@ -24,7 +24,7 @@ services:
       - N4_PCI=0000:b1:02.1     # PCI addresses of the UPF N4 interface
       - N6_PCI=0000:b1:02.2     # PCI addresses of the UPF N6 interface
       - MAX_SIMD_BITWIDTH=512   # Enable/Disable AVX-512 vPMDs. Valid values: 256, 512
-      - NODE_VARIANT=avx512     # Specify the preferred default variant. Valid values: avx, avx2, avx512
+      - NODE_VARIANT=skx        # Specify the preferred node default variant. Valid values: hsw (avx2), icl (avx512_bitalg), skx (avx512f)
       # UPF Interfaces
       - N3_IP=10.21.1.64        # UPF N3 IP address
       - N3_CIDR=24              # UPF N3 CIDR
@@ -40,28 +40,28 @@ services:
       - NODE_ID=10.21.1.65      # UPF Node ID (FQDN or IP address)
     restart: unless-stopped
 
-#   dn-gateway:
-#     container_name: dn-gateway
-#     image: debian:stable-slim
-#     privileged: true
-#     networks:
-#       upf_net:
-#         ipv4_address: 10.21.1.67 # DN-GW IP
-#     cap_add:
-#       - NET_ADMIN
-#     command: 
-#       - sh
-#       - -c
-#       - |
-#         apt-get update && apt-get install -y iproute2 iptables iputils-ping
-#         sysctl -w net.ipv4.ip_forward=1
-#         iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -j MASQUERADE
-#         ip route add 10.45.0.0/16 via 10.21.1.64
+  dn-gateway:
+    container_name: dn-gateway
+    image: debian:stable-slim
+    privileged: true
+    networks:
+      upf_net:
+        ipv4_address: 10.21.1.67 # DN-GW IP
+    cap_add:
+      - NET_ADMIN
+    command: 
+      - sh
+      - -c
+      - |
+        apt-get update && apt-get install -y iproute2 iptables iputils-ping
+        sysctl -w net.ipv4.ip_forward=1
+        iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -j MASQUERADE
+        ip route add 10.45.0.0/16 via 10.21.1.64
         
-# networks:
-#   upf_net:
-#     name: upf_net
-#     driver: bridge
-#     ipam:
-#       config:
-#         - subnet: 10.21.1.0/24
+networks:
+  upf_net:
+    name: upf_net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.21.1.0/24
