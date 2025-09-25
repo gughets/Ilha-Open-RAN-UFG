@@ -15,8 +15,30 @@ services:
       - ../config/upf-init.conf:/etc/vpp/init.conf
       - ../config/vpp-startup.conf:/etc/vpp/startup.conf
       - /dev/hugepages:/dev/hugepages
-    entrypoint: ["vpp", "-c", "/etc/vpp/startup.conf"]
-    # entrypoint: ["sleep", "infinity"]
+    environment:
+      # VPP Settings
+      - MAIN_CORE=24            # Set logical CPU core where main thread runs, if main core is not set VPP will use core 1 if available
+      - WORKER_CORES=25,26,27   # Set logical CPU core(s) where worker threads are running
+      - MAIN_HEAP_SIZE=4G       # Set the main heap size, default is 1G
+      - N3_PCI=0000:b1:02.0     # PCI addresses of the UPF N3 interface
+      - N4_PCI=0000:b1:02.1     # PCI addresses of the UPF N4 interface
+      - N6_PCI=0000:b1:02.2     # PCI addresses of the UPF N6 interface
+      - MAX_SIMD_BITWIDTH=512   # Enable/Disable AVX-512 vPMDs. Valid values: 256, 512
+      - NODE_VARIANT=avx512     # Specify the preferred default variant. Valid values: avx, avx2, avx512
+      # UPF Interfaces
+      - N3_IP=10.21.1.64        # UPF N3 IP address
+      - N3_CIDR=24              # UPF N3 CIDR
+      - N3_MTU=9600             # UPF N3 MTU
+      - N3_NWI=oranbr           # UPF N3 NWI name
+      - N4_IP=10.21.1.65        # UPF N4 IP address
+      - N4_CIDR=24              # UPF N4 CIDR
+      - N4_MTU=9600             # UPF N4 MTU
+      - N6_IP=10.21.1.66        # UPF N6 IP address
+      - N6_CIDR=24              # UPF N6 CIDR
+      - N6_MTU=9600             # UPF N6 MTU
+      - N6_GATEWAY=10.21.1.67   # UPF N6 Gateway
+      - NODE_ID=10.21.1.65      # UPF Node ID (FQDN or IP address)
+    # entrypoint: [""]
     restart: unless-stopped
 
 #   dn-gateway:

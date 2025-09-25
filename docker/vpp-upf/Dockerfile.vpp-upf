@@ -121,8 +121,8 @@ RUN dpkg -i /upf-plugin*.deb && rm -f /*.deb && ln -s /usr/local/lib/vpp_plugins
 # Copy configuration files and disable test plugins
 RUN ldconfig && mkdir -p /var/log/vpp/ && \
     mv /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins /usr/lib/x86_64-linux-gnu/vpp_api_test_plugins.disabled
-COPY docker/config/upf-init.conf /etc/vpp/init.conf
-COPY docker/config/vpp-startup.conf /etc/vpp/startup.conf
+COPY config/upf-init.conf.tmpl /etc/vpp/init.conf.tmpl
+COPY config/vpp-startup.conf.tmpl /etc/vpp/startup.conf.tmpl
+COPY scripts/entrypoint.bash /usr/local/bin/entrypoint.bash
 
-CMD [ "-c", "/etc/vpp/startup.conf" ]
-ENTRYPOINT ["vpp"]
+ENTRYPOINT ["entrypoint.bash"]

@@ -19,5 +19,5 @@ undeploy-core: ## Undeploy Open5GS core components
 
 build-vpp-upf: ## Build Docker image for VPP-UPF
 	@echo "${CYAN}Building VPP-UPF Docker image...${END}"
-	@docker build -t $(VPP_UPF_IMAGE_REPO)/$(VPP_UPF_IMAGE):$(VPP_UPF_IMAGE_TAG) -f docker/vpp-upf/Dockerfile.vpp-upf .
+	@docker build -t $(VPP_UPF_IMAGE_REPO)/$(VPP_UPF_IMAGE):$(VPP_UPF_IMAGE_TAG) -f docker/vpp-upf/Dockerfile.vpp-upf docker/vpp-upf
 	@echo "${GREEN}VPP-UPF Docker image built successfully!${END}"
