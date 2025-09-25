@@ -12,13 +12,13 @@ vpp -c /etc/vpp/startup.conf
 # Wait for VPP process
 until pgrep -x vpp_main > /dev/null; do
     echo "Waiting for VPP process..."
-    sleep 1
+    sleep 2
 done
 
 # Wait for VPP CLI
 until vppctl show version &>/dev/null; do
     echo "Waiting for VPP CLI..."
-    sleep 1
+    sleep 2
 done
 
 SEP="=================================================="

@@ -44,24 +44,30 @@ services:
     container_name: dn-gateway
     image: debian:stable-slim
     privileged: true
-    networks:
-      upf_net:
-        ipv4_address: 10.21.1.67 # DN-GW IP
     cap_add:
       - NET_ADMIN
-    command: 
-      - sh
+    networks:
+      default: {}
+      public_net_core:
+        ipv4_address: 10.21.1.67 # DN-GW IP
+    entrypoint:
+      - bash
       - -c
       - |
-        apt-get update && apt-get install -y iproute2 iptables iputils-ping
+        apt-get update && apt-get install -y iproute2 iptables iputils-ping procps
         sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -j MASQUERADE
-        ip route add 10.45.0.0/16 via 10.21.1.64
+        iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -o eth0 -j MASQUERADE
+        ip route add 10.45.0.0/16 via 10.21.1.66
+        echo "✅ DN-GW configured, waiting..."
+        trap : SIGTERM SIGINT
+        sleep infinity & wait
         
 networks:
-  upf_net:
-    name: upf_net
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.21.1.0/24
+  public_net_core:
+      name: rnp-public-core
+      ipam:
+          config:
+              - subnet: 10.21.1.0/24
+      driver_opts:
+          com.docker.network.bridge.name: "cn5g-core"
+
