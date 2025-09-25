@@ -12,8 +12,8 @@ services:
       - /dev/vfio/264
       - /dev/vfio/265
     volumes:
-      - ../config/upf-init.conf:/etc/vpp/init.conf
-      - ../config/vpp-startup.conf:/etc/vpp/startup.conf
+      - ../config/upf-init.conf.tmpl:/etc/vpp/init.conf.tmpl
+      - ../config/vpp-startup.conf.tmpl:/etc/vpp/startup.conf.tmpl
       - /dev/hugepages:/dev/hugepages
     environment:
       # VPP Settings
