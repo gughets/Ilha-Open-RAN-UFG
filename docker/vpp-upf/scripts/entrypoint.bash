@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Replace environment variables in the startup configuration file
-envsubst < /etc/startup.conf.tmpl > /etc/startup.conf
+envsubst < /etc/vpp/startup.conf.tmpl > /etc/vpp/startup.conf
 envsubst < /etc/vpp/init.conf.tmpl > /etc/vpp/init.conf
 
 echo "Starting VPP..."

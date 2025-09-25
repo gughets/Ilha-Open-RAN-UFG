@@ -125,4 +125,6 @@ COPY config/upf-init.conf.tmpl /etc/vpp/init.conf.tmpl
 COPY config/vpp-startup.conf.tmpl /etc/vpp/startup.conf.tmpl
 COPY scripts/entrypoint.bash /usr/local/bin/entrypoint.bash
 
+RUN chmod +x /usr/local/bin/entrypoint.bash
+
 ENTRYPOINT ["entrypoint.bash"]

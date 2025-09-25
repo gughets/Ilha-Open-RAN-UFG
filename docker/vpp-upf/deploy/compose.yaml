@@ -38,7 +38,6 @@ services:
       - N6_MTU=9600             # UPF N6 MTU
       - N6_GATEWAY=10.21.1.67   # UPF N6 Gateway
       - NODE_ID=10.21.1.65      # UPF Node ID (FQDN or IP address)
-    # entrypoint: [""]
     restart: unless-stopped
 
 #   dn-gateway:
