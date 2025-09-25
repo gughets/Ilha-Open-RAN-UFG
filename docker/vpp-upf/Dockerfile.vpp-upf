@@ -108,7 +108,8 @@ RUN apt-get update && apt-get install -y \
     libelf1 \
     nano \
     net-tools \
-    iproute2
+    iproute2 \
+    gettext-base
 
 # Install VPP from builder
 COPY --from=builder /vpp/build-root/*.deb /

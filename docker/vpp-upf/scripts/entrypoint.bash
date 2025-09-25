@@ -7,7 +7,7 @@ envsubst < /etc/vpp/startup.conf.tmpl > /etc/vpp/startup.conf
 envsubst < /etc/vpp/init.conf.tmpl > /etc/vpp/init.conf
 
 echo "Starting VPP..."
-vpp -c /etc/startup.conf &
+vpp -c /etc/vpp/startup.conf &
 
 # Wait for VPP process
 until pgrep -x vpp_main > /dev/null; do
