@@ -7,7 +7,7 @@ envsubst < /etc/vpp/startup.conf.tmpl > /etc/vpp/startup.conf
 envsubst < /etc/vpp/init.conf.tmpl > /etc/vpp/init.conf
 
 echo "Starting VPP..."
-vpp -c /etc/vpp/startup.conf
+vpp -c /etc/vpp/startup.conf | tee /var/log/vpp/output.log &
 
 # Wait for VPP process
 until pgrep -x vpp_main > /dev/null; do
@@ -15,29 +15,28 @@ until pgrep -x vpp_main > /dev/null; do
     sleep 2
 done
 
-# Wait for VPP CLI
-until vppctl show version &>/dev/null; do
-    echo "Waiting for VPP CLI..."
+# Wait until GTPU endpoints exist
+until [ "$(vppctl show upf gtpu endpoint | grep -c 'IP4')" -gt 0 ]; do
+    echo "Waiting for VPP UPF GTPU endpoints..."
     sleep 2
 done
 
-SEP="=================================================="
+SEP="========================"
 
 echo "✅ VPP is up and running!"
-echo "$SEP"
-echo "VPP Info:"
-vppctl -s /run/vpp/cli.sock show version
-echo "$SEP"
 
-echo "UPF GTPU Info:"
-vppctl -s /run/vpp/cli.sock show upf gtpu endpoint
-echo "$SEP"
+echo "$SEP VPP INFO $SEP"
+vppctl show version
+printf "\n"
 
-echo "UPF PFCP Info:"
-vppctl -s /run/vpp/cli.sock show upf specification release
-vppctl -s /run/vpp/cli.sock show upf pfcp endpoint
-vppctl -s /run/vpp/cli.sock show upf node-id
-echo "$SEP"
+echo "$SEP UPF GTPU INFO $SEP"
+vppctl show upf gtpu endpoint
+printf "\n"
 
-# Mantém o container vivo
-sleep infinity
+echo "$SEP UPF PFCP INFO $SEP"
+vppctl show upf specification release
+vppctl show upf pfcp endpoint
+vppctl show upf node-id
+printf "\n"
+
+tail -f /var/log/vpp/output.log

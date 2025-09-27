@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vpp-upf
+description: Helm chart to deploy VPP UPF
+type: application
+version: 0.0.1
+appVersion: "22.10.1"
+authors:
+  - name: Murilo Silva
+    email: murilo.silva@rnp.br

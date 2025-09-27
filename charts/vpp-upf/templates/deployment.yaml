@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vpp-upf.fullname" . }}
+  labels:
+    {{- include "vpp-upf.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "vpp-upf.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: >-
+          [
+            {{- $first := true }}
+            {{- if .Values.global.n3network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n3network.name }}",
+                "interface": "n3"
+              }
+            {{- end }}
+      
+            {{- if .Values.global.n4network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n4network.name }}",
+                "interface": "n4"
+              }
+            {{- end }}
+
+            {{- if .Values.global.n6network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}",
+                "interface": "n6"
+              }
+            {{- end }}
+          ]
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      labels:
+        {{- include "vpp-upf.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: vpp-upf
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: pfcp
+              containerPort: 8805
+              protocol: TCP
+            - name: gtpu
+              containerPort: 2152
+              protocol: UDP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vpp/startup.conf.tmpl
+              subPath: startup.conf.tmpl
+            - name: config
+              mountPath: /etc/vpp/init.conf.tmpl
+              subPath: init.conf.tmpl 
+            - name: hugepage-1gi
+              mountPath: /hugepages-1Gi
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "pgrep -x vpp_main"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  [ "$(vppctl show upf gtpu endpoint | grep -c 'IP4')" -gt 0 ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 5
+          resources:
+            limits:
+              intel.com/intel_sriov_dpdk: 3
+              {{- with .Values.resources.limits }}
+                {{- toYaml . | nindent 14 }}
+              {{- end }}
+            requests:
+              intel.com/intel_sriov_dpdk: 3
+              {{- with .Values.resources.requests }}
+                {{- toYaml . | nindent 14 }}
+              {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "vpp-upf.fullname" . }}-config
+            defaultMode: 0644
+        - name: hugepage-1gi
+          emptyDir:
+            medium: HugePages-1Gi

@@ -1,0 +1,74 @@
+global:
+  n3network:
+    enabled: true
+    name: n3network
+    pciBusId: "0000:b1:02.0"
+    vlan: 3225
+  n4network:
+    enabled: true
+    name: n4network
+    pciBusId: "0000:b1:02.1"
+    vlan: 3225
+  n6network:
+    enabled: true
+    name: n6network
+    pciBusId: "0000:b1:02.2"
+    vlan: 3225
+
+replicaCount: 1
+
+nameOverride: ""
+fullnameOverride: ""
+podAnnotations: {}
+podLabels: {}
+imagePullSecrets: []
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+podSecurityContext: {}
+
+securityContext:
+  privileged: true
+
+image:
+  repository: muriloavlis/vpp-upf
+  tag: v22.10.1
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: "8"
+    memory: "16Gi"
+    hugepages-1Gi: 4Gi
+  requests:
+    cpu: "4"
+    memory: "8Gi"
+    hugepages-1Gi: 4Gi
+
+config:
+  vpp:
+    mainCore: 24            # Set logical CPU core where main thread runs, if main core is not set VPP will use core 1 if available
+    workerCores: "25-27"    # Set logical CPU core(s) where worker threads are running
+    mainHeapSize: 4G        # Set the main heap size, default is 1G
+    n3Pci: 0000:b1:02.0     # PCI addresses of the UPF N3 interface
+    n4Pci: 0000:b1:02.1     # PCI addresses of the UPF N4 interface
+    n6Pci: 0000:b1:02.2     # PCI addresses of the UPF N6 interface
+    maxSimdBitwidth: 512    # Enable/Disable AVX-512 vPMDs. Valid values: 256, 512
+    nodeVariant: skx        # Specify the preferred node default variant. Valid values: hsw (avx2), icl (avx512_bitalg), skx (avx512f)
+  upf:
+    n3:
+      ip: 10.21.1.64        # UPF N3 IP address
+      cidr: 24              # UPF N3 CIDR
+      mtu: 1500             # UPF N3 MTU
+      nwi: oranbr           # UPF N3 NWI name
+    n4:
+      ip: 10.21.1.65        # UPF N4 IP address
+      cidr: 24              # UPF N4 CIDR
+      mtu: 1500             # UPF N4 MTU
+    n6:
+      ip: 10.21.1.66        # UPF N6 IP address
+      cidr: 24              # UPF N6 CIDR
+      mtu: 1500             # UPF N6 MTU
+      gateway: 10.21.1.67   # UPF N6 Gateway 
+    nodeId: 10.21.1.65      # UPF Node ID (FQDN or N4 IP address)

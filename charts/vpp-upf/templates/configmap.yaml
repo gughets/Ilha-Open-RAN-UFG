@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vpp-upf.fullname" . }}-config
+  labels:
+    {{- include "vpp-upf.labels" . | nindent 4 }}
+data:
+  startup.conf.tmpl: |
+    unix {
+      nodaemon
+      log /var/log/vpp/vpp.log
+      full-coredump
+      gid vpp
+      cli-listen /run/vpp/cli.sock
+      exec /etc/vpp/init.conf
+    }
+
+    api-trace {
+      on
+    }
+
+    cpu {
+      main-core {{ .Values.config.vpp.mainCore }}
+      corelist-workers {{ .Values.config.vpp.workerCores }}
+    }
+
+    memory {
+    	# Set the main heap size, default is 1G
+    	main-heap-size {{ .Values.config.vpp.mainHeapSize }}
+    	# Set the default huge page size.
+    	default-hugepage-size 1G
+    }
+
+    api-segment {
+      gid vpp
+    }
+
+    dpdk {
+      dev {{ .Values.config.vpp.n3Pci }} {name n3}
+      dev {{ .Values.config.vpp.n4Pci }} {name n4}
+      dev {{ .Values.config.vpp.n6Pci }} {name n6}
+
+      max-simd-bitwidth {{ .Values.config.vpp.maxSimdBitwidth }}  # get support info with: grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
+    }
+
+    # node variant defaults
+    node {
+    	default	{ variant {{ .Values.config.vpp.nodeVariant }} }
+    	ip4-rewrite { variant {{ .Values.config.vpp.nodeVariant }} }
+    }
+
+    plugins {
+      path /usr/lib/x86_64-linux-gnu/vpp_plugins/
+      plugin default {disable}
+      plugin dpdk_plugin.so {enable}
+      plugin upf_plugin.so {enable}
+    }
+
+  init.conf.tmpl: |
+    # Table Creation
+    ip table add 1  
+    ip table add 2
+    ip6 table add 1
+    ip6 table add 2
+
+    # N3
+    set interface ip table n3 0
+    set interface mtu {{ .Values.config.upf.n3.mtu }} n3
+    set interface ip address n3 {{ .Values.config.upf.n3.ip }}/{{ .Values.config.upf.n3.cidr }}
+    set interface state n3 up
+
+    # N4
+    set interface ip table n4 1
+    set interface mtu {{ .Values.config.upf.n4.mtu }} n4
+    set interface ip address n4 {{ .Values.config.upf.n4.ip }}/{{ .Values.config.upf.n4.cidr }}
+    set interface state n4 up
+
+    # N6
+    set interface ip table n6 2
+    set interface mtu {{ .Values.config.upf.n6.mtu }} n6
+    set interface ip address n6 {{ .Values.config.upf.n6.ip }}/{{ .Values.config.upf.n6.cidr }}
+    set interface state n6 up
+
+    # Default route for N6
+    ip route add 0.0.0.0/0 table 2 via {{ .Values.config.upf.n6.gateway }} n6
+
+    # PFCP configuration
+    upf pfcp endpoint ip {{ .Values.config.upf.n4.ip }} vrf 1
+    upf node-id fqdn {{ .Values.config.upf.nodeId }}
+
+    # NWI configuration
+    upf nwi name {{ .Values.config.upf.n3.nwi }} vrf 0
+
+    # GTP-U configuration
+    upf specification release 16
+    upf gtpu endpoint ip {{ .Values.config.upf.n3.ip }} nwi {{ .Values.config.upf.n3.nwi }} teid 0x000004d2/2

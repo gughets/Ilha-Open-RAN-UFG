@@ -6,11 +6,6 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
-    devices:
-      - /dev/vfio/vfio
-      - /dev/vfio/263 # readlink /sys/bus/pci/devices/{pci-id}/iommu_group
-      - /dev/vfio/264
-      - /dev/vfio/265
     volumes:
       - ../config/upf-init.conf.tmpl:/etc/vpp/init.conf.tmpl
       - ../config/vpp-startup.conf.tmpl:/etc/vpp/startup.conf.tmpl
