@@ -2,17 +2,14 @@ global:
   n3network:
     enabled: true
     name: n3network
-    pciBusId: "0000:b1:02.0"
     vlan: 3225
   n4network:
     enabled: true
     name: n4network
-    pciBusId: "0000:b1:02.1"
     vlan: 3225
   n6network:
     enabled: true
     name: n6network
-    pciBusId: "0000:b1:02.2"
     vlan: 3225
 
 replicaCount: 1

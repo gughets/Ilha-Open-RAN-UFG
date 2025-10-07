@@ -120,4 +120,9 @@ dependencies:
     repository: file://../eupf
     condition: eupf.enabled
     alias: eupf
+  - name: vpp-upf
+    version: ~0.0.1
+    repository: file://../vpp-upf
+    condition: vpp-upf.enabled
+    alias: vpp-upf
 

@@ -15,7 +15,7 @@ spec:
       "vlan": {{ .Values.global.n6network.vlan | default 0 | int }},
       "spoofchk": "off",
       "trust": "on",
-      "deviceID": "{{ .Values.global.n6network.pciBusId }}"
+      "deviceID": "{{ .Values.config.vpp.n6Pci }}"
     }
 
 {{- end }}

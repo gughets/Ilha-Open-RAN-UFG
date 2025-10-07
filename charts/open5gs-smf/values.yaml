@@ -8,6 +8,7 @@
 ## @param global.storageClass Global StorageClass for Persistent Volume(s)
 ##
 global:
+  useUpgVpp: false
   imageRegistry: ""
   ## E.g.
   ## imagePullSecrets:

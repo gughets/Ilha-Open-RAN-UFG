@@ -15,7 +15,7 @@ spec:
       "vlan": {{ .Values.global.n4network.vlan | default 0 | int }},
       "spoofchk": "off",
       "trust": "on",
-      "deviceID": "{{ .Values.global.n4network.pciBusId }}"
+      "deviceID": "{{ .Values.config.vpp.n4Pci }}"
     }
 
 {{- end }}

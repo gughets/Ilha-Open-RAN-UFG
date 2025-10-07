@@ -1,5 +1,36 @@
 dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
+global:
+  # Global network parametes
+  n2network:
+    enabled: false
+    name: n2network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225 # sriov only
+  n3network:
+    enabled: false
+    name: n3network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225 # sriov only
+  n4network:
+    enabled: false
+    name: n4network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225
+  n6network:
+    enabled: false
+    name: n6network
+    type: sriov
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223 # sriov only
+
 populate:
   enabled: true
   image:
@@ -21,7 +52,11 @@ mongodb:
 smf:
   enabled: true
 upf:
-  enabled: true
+  enabled: false
+eupf:
+  enabled: false
+vpp-upf:
+  enabled: false
 webui:
   enabled: true
 

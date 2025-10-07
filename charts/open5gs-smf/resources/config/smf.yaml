@@ -1,13 +1,17 @@
 {{ $open5gsName := .Release.Name }}
 
 logger:
-  level: {{ .Values.config.logLevel }}
+  level: {{ .Values.config.logLevel | default "info" }}
 #  level: info   # fatal|error|warn|info(default)|debug|trace
 
 global:
 # max:
 #   ue: 1024 # The number of UE can be increased depending on memory size.
 #    peer: 64
+  parameter:
+{{- if .Values.global.useUpgVpp }}
+    use_upg_vpp: {{ .Values.global.useUpgVpp }}  # true|false
+{{- end }}
 
 smf:
   sbi:
