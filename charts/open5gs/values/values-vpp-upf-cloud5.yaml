@@ -1,6 +1,7 @@
 dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
 
 global:
+  useUpgVpp: true
   # Global network parametes
   n2network:
     enabled: true
@@ -16,6 +17,28 @@ global:
     subnetIP: 10.23.31.0
     cidr: 24
     vlan: 3231 # sriov only
+  n4network:
+    enabled: true
+    name: n4network
+    type: sriov
+    subnetIP: 10.23.32.0
+    cidr: 24
+    vlan: 3232 # sriov only
+  n6network:
+    enabled: true
+    name: n6network
+    type: sriov
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223 # sriov only
+  gtwnetwork:
+    enabled: true
+    name: gtwnetwork
+    type: sriov       # Options: sriov, macvlan, ipvlan
+    masterIf: eth0    # Required for macvlan, ipvlan, bridge
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223           # Optional VLAN ID for sriov, macvlan, ipvlan
 
 populate:
   enabled: true
@@ -43,6 +66,8 @@ mongodb:
     enabled: false
   global:
     storageClass: openebs-hostpath
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 smf:
   enabled: true
@@ -53,58 +78,92 @@ smf:
     repository: gradiant/open5gs
     tag: "2.7.6"
   config:
-    # upf:
-    #   pfcp:
-    #     hostname: "open5gs-upf-pfcp"
-    #     port: 8805
+    n4if:
+      ipAddress: "10.23.32.51"
+    upf:
+      pfcp:
+        hostname: "10.23.32.52"
+        port: 8805
     pcrf:
       enabled: false
     dnsList:
     - 8.8.8.8
-    - 8.8.4.4
+    - 1.1.1.1
     - 2001:4860:4860::8888
-    - 2001:4860:4860::8844
+    - 2606:4700:4700::1111
     subnetList:
       - subnet: 10.45.0.0/16
         gateway: 10.45.0.1
         dnn: oranbr
     mtu: 1500
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
-upf:
+vpp-upf:
   enabled: true
-  updateStrategy:
-    type: Recreate
   image:
-    registry: docker.io
-    repository: gradiant/open5gs
-    tag: "2.7.6"
-  podSecurityContext:
-    enabled: true
-    fsGroup: 0
-  containerSecurityContext:
-    enabled: true
-    runAsUser: 0
-    privileged: true
-    capabilities:
-      add: ["NET_ADMIN"]
+    repository: muriloavlis/vpp-upf
+    tag: v22.10.1
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: "8000m"
+      memory: "8Gi"
+      hugepages-1Gi: 4Gi
+    requests:
+      cpu: "4000m"
+      memory: "4Gi"
+      hugepages-1Gi: 4Gi
   config:
-    hostNetwork: false
-    n3if:
-      ipAddress: "10.23.31.51"
+    vpp:
+      mainCore: 78            # Set logical CPU core where main thread runs, if main core is not set VPP will use core 1 if available
+      workerCores: "79-80"    # Set logical CPU core(s) where worker threads are running
+      mainHeapSize: 4G        # Set the main heap size, default is 1G
+      dpdk_devices:
+        n3ResourceName: rnp.br/intel_sriov_dpdk_core_n3
+        n4ResourceName: rnp.br/intel_sriov_dpdk_core_n4
+        n6ResourceName: rnp.br/intel_sriov_dpdk_core_n6
+      maxSimdBitwidth: 512    # Enable/Disable AVX-512 vPMDs. Valid values: 256, 512
+      nodeVariant: skx        # Specify the preferred node default variant. Valid values: hsw (avx2), icl (avx512_bitalg), skx (avx512f)
     upf:
-      pfcp:
-        dev: "eth0"
-        advertise: "open5gs-upf-pfcp"
-      gtpu:
-        dev: "n3"
-    subnetList:
-    - subnet: 10.45.0.0/16
-      gateway: 10.45.0.1
-      dnn: oranbr
-      dev: ogstun
-      mask: 16
-      createDev: true
-      enableNAT: true
+      n3:
+        ip: 10.23.31.52        # UPF N3 IP address
+        cidr: 24              # UPF N3 CIDR
+        mtu: 9600             # UPF N3 MTU
+        nwi: oranbr           # UPF N3 NWI name
+      n4:
+        ip: 10.23.32.52        # UPF N4 IP address
+        cidr: 24              # UPF N4 CIDR
+        mtu: 9600             # UPF N4 MTU
+      n6:
+        ip: 10.21.0.241        # UPF N6 IP address
+        cidr: 24              # UPF N6 CIDR
+        mtu: 9600             # UPF N6 MTU
+        gateway: 10.21.0.242    # UPF N6 Gateway 
+      nodeId: 10.23.32.52      # UPF Node ID (FQDN or N4 IP address)
+
+gtw-app:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: docker.io/nicolaka/netshoot
+    pullPolicy: IfNotPresent
+    tag: "v0.14"
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+      rnp.br/intel_sriov_netdevice: "1"
+    requests:
+      cpu: "500m"
+      memory: "256Mi"
+      rnp.br/intel_sriov_netdevice: "1"
+  config:
+    gtwif:
+      ipAddress: "10.21.0.242"
+    ueSubnet: "10.45.0.0/16"
+    upfN6: "10.21.0.241"
+    siteRouter: "10.21.0.100"
 
 webui:
   enabled: true
@@ -117,6 +176,8 @@ webui:
       type: "NodePort"
       nodePorts:
         http: "30999"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 # 4G (disabled)
 hss:
@@ -238,6 +299,8 @@ amf:
           - sst: 1
             sd: "0xFFFFFF"
     networkName: OPENRANBR-5GS
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 ausf:
   enabled: true
@@ -245,6 +308,8 @@ ausf:
     registry: docker.io
     repository: gradiant/open5gs
     tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 bsf:
   enabled: true
@@ -252,6 +317,8 @@ bsf:
     registry: docker.io
     repository: gradiant/open5gs
     tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 nrf:
   enabled: true
@@ -277,6 +344,8 @@ nrf:
       - plmn_id:
           mcc: "001"
           mnc: "03"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 nssf:
   enabled: true
@@ -289,6 +358,8 @@ nssf:
       - uri: ""
         sst: 1
         sd: "0xFFFFFF"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 pcf:
   enabled: true
@@ -298,6 +369,8 @@ pcf:
     tag: "2.7.6"
   mongodb:
     enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 scp:
   enabled: true
@@ -307,6 +380,8 @@ scp:
     tag: "2.7.6"
   mongodb:
     enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 udm:
   enabled: true
@@ -314,6 +389,8 @@ udm:
     registry: docker.io
     repository: gradiant/open5gs
     tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
     
 udr:
   enabled: true
@@ -321,3 +398,5 @@ udr:
     registry: docker.io
     repository: gradiant/open5gs
     tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5

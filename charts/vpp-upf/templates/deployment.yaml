@@ -9,6 +9,13 @@ spec:
   selector:
     matchLabels:
       {{- include "vpp-upf.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: {{ .Values.updateStrategy.type | default "RollingUpdate" }}
+    {{- if eq .Values.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable | default 1 }}
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge | default 1 }}
+    {{- end }}
   template:
     metadata:
       annotations:
@@ -19,7 +26,7 @@ spec:
               {{- if not $first }},{{- end }}
               {{- $first = false }}
               {
-                "name": "{{ .Release.Name }}-{{ .Values.global.n3network.name }}",
+                "name": "{{ .Release.Name }}-{{ .Values.global.n3network.name }}-vpp-upf",
                 "interface": "n3"
               }
             {{- end }}
@@ -28,7 +35,7 @@ spec:
               {{- if not $first }},{{- end }}
               {{- $first = false }}
               {
-                "name": "{{ .Release.Name }}-{{ .Values.global.n4network.name }}",
+                "name": "{{ .Release.Name }}-{{ .Values.global.n4network.name }}-vpp-upf",
                 "interface": "n4"
               }
             {{- end }}
@@ -37,7 +44,7 @@ spec:
               {{- if not $first }},{{- end }}
               {{- $first = false }}
               {
-                "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}",
+                "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}-vpp-upf",
                 "interface": "n6"
               }
             {{- end }}
@@ -67,6 +74,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/etc/vpp/entrypoint.bash"]
           ports:
             - name: pfcp
               containerPort: 8805
@@ -80,7 +88,10 @@ spec:
               subPath: startup.conf.tmpl
             - name: config
               mountPath: /etc/vpp/init.conf.tmpl
-              subPath: init.conf.tmpl 
+              subPath: init.conf.tmpl
+            - name: config
+              mountPath: /etc/vpp/entrypoint.bash
+              subPath: entrypoint.bash
             - name: hugepage-1gi
               mountPath: /hugepages-1Gi
           livenessProbe:
@@ -99,19 +110,23 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  [ "$(vppctl show upf gtpu endpoint | grep -c 'IP4')" -gt 0 ]
-            initialDelaySeconds: 5
-            periodSeconds: 5
+                  vppctl -s /run/vpp/cli.sock show upf gtpu endpoint | grep -q 'IP4' && exit 0 || exit 1
+            initialDelaySeconds: 15
+            periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
           resources:
             limits:
-              intel.com/intel_sriov_dpdk: 3
+              {{ .Values.config.vpp.dpdk_devices.n3ResourceName | quote }}: 1
+              {{ .Values.config.vpp.dpdk_devices.n4ResourceName | quote }}: 1
+              {{ .Values.config.vpp.dpdk_devices.n6ResourceName | quote }}: 1
               {{- with .Values.resources.limits }}
                 {{- toYaml . | nindent 14 }}
               {{- end }}
             requests:
-              intel.com/intel_sriov_dpdk: 3
+              {{ .Values.config.vpp.dpdk_devices.n3ResourceName | quote }}: 1
+              {{ .Values.config.vpp.dpdk_devices.n4ResourceName | quote }}: 1
+              {{ .Values.config.vpp.dpdk_devices.n6ResourceName | quote }}: 1
               {{- with .Values.resources.requests }}
                 {{- toYaml . | nindent 14 }}
               {{- end }}
@@ -131,7 +146,7 @@ spec:
         - name: config
           configMap:
             name: {{ include "vpp-upf.fullname" . }}-config
-            defaultMode: 0644
+            defaultMode: 0744
         - name: hugepage-1gi
           emptyDir:
             medium: HugePages-1Gi

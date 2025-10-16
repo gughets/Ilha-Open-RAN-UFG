@@ -120,16 +120,16 @@ vpp-upf:
       n3:
         ip: 10.21.1.56        # UPF N3 IP address
         cidr: 24              # UPF N3 CIDR
-        mtu: 1500             # UPF N3 MTU
+        mtu: 9600             # UPF N3 MTU
         nwi: oranbr           # UPF N3 NWI name
       n4:
         ip: 10.21.1.57        # UPF N4 IP address
         cidr: 24              # UPF N4 CIDR
-        mtu: 1500             # UPF N4 MTU
+        mtu: 9600             # UPF N4 MTU
       n6:
         ip: 10.21.0.58        # UPF N6 IP address
         cidr: 24              # UPF N6 CIDR
-        mtu: 1500             # UPF N6 MTU
+        mtu: 9600             # UPF N6 MTU
         gateway: 10.21.0.2    # UPF N6 Gateway 
       nodeId: 10.21.1.57      # UPF Node ID (FQDN or N4 IP address)
 

@@ -1,0 +1,70 @@
+global:
+  gtwnetwork:
+    enabled: true
+    name: gtwnetwork
+    type: sriov       # Options: sriov, macvlan, ipvlan
+    masterIf: eth0    # Required for macvlan, ipvlan, bridge
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223           # Optional VLAN ID for sriov, macvlan, ipvlan
+
+replicaCount: 1
+
+image:
+  repository: docker.io/nicolaka/netshoot
+  pullPolicy: IfNotPresent
+  tag: "v0.14"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext:
+  privileged: true
+
+config:
+  gtwif:
+    ipAddress: "10.21.0.242"
+  ueSubnet: "10.45.0.0/16"
+  upfN6: "10.21.0.241"
+
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "512Mi"
+    rnp.br/intel_sriov_netdevice: "1"
+  requests:
+    cpu: "500m"
+    memory: "256Mi"
+    rnp.br/intel_sriov_netdevice: "1"
+
+livenessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - ip route show dev gtw || exit 1
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - ip route show dev gtw || exit 1
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

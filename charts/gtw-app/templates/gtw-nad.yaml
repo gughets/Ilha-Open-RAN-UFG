@@ -1,22 +1,22 @@
-{{- if $.Values.global.n2network.enabled }}
+{{- if $.Values.global.gtwnetwork.enabled }}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
-  name: {{ .Release.Name }}-{{ .Values.global.n2network.name }}
-  {{- if eq .Values.global.n2network.type "sriov" }}
+  name: {{ .Release.Name }}-{{ .Values.global.gtwnetwork.name }}
+  {{- if eq .Values.global.gtwnetwork.type "sriov" }}
   annotations:
     k8s.v1.cni.cncf.io/resourceName: rnp.br/intel_sriov_netdevice
   {{- end }}
 spec:
   config: >
-    {{- if eq .Values.global.n2network.type "sriov" }}
+    {{- if eq .Values.global.gtwnetwork.type "sriov" }}
     {
       "cniVersion": "0.3.1",
       "type": "sriov",
-      "name": "{{ .Release.Name }}-{{ .Values.global.n2network.name }}",
+      "name": "{{ .Release.Name }}-{{ .Values.global.gtwnetwork.name }}",
       "spoofchk": "off",
       "trust": "on",
-      "vlan": {{ .Values.global.n2network.vlan | default 0 | int }},
+      "vlan": {{ .Values.global.gtwnetwork.vlan | default 0 | int }},
       "ipam": {
         "type": "static"    
       }
@@ -26,20 +26,20 @@ spec:
       "cniVersion": "0.3.1",
       "plugins": [
         {
-          "type": {{ .Values.global.n2network.type | quote }},
+          "type": {{ .Values.global.gtwnetwork.type | quote }},
           "capabilities": { "ips": true },
-          "master": {{ .Values.global.n2network.masterIf | quote }},
-          {{- if eq .Values.global.n2network.type "macvlan" }}
+          "master": {{ .Values.global.gtwnetwork.masterIf | quote }},
+          {{- if eq .Values.global.gtwnetwork.type "macvlan" }}
           "mode": "bridge",
           {{- end }}
-          {{- if eq .Values.global.n2network.type "ipvlan" }}
+          {{- if eq .Values.global.gtwnetwork.type "ipvlan" }}
           "mode": "l2",
           {{- end }}
           "ipam": {
             "type": "static"
           }
         }
-        {{- if eq .Values.global.n2network.type "macvlan" }}
+        {{- if eq .Values.global.gtwnetwork.type "macvlan" }}
         ,
         {
           "capabilities": { "mac": true },

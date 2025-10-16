@@ -2,10 +2,10 @@
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
-  name: {{ .Values.global.n4network.name }}-open5gs-smf
+  name: {{ .Release.Name }}-{{ .Values.global.n4network.name }}
   {{- if eq .Values.global.n4network.type "sriov" }}
   annotations:
-    k8s.v1.cni.cncf.io/resourceName: intel.com/intel_sriov_netdevice
+    k8s.v1.cni.cncf.io/resourceName: rnp.br/intel_sriov_netdevice
   {{- end }}
 spec:
   config: >
@@ -13,7 +13,7 @@ spec:
     {
       "cniVersion": "0.3.1",
       "type": "sriov",
-      "name": "{{ .Values.global.n4network.name }}-open5gs-smf",
+      "name": "{{ .Release.Name }}-{{ .Values.global.n4network.name }}",
       "spoofchk": "off",
       "trust": "on",
       "vlan": {{ .Values.global.n4network.vlan | default 0 | int }},

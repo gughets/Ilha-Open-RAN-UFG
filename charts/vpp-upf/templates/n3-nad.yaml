@@ -3,19 +3,18 @@
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
-  name: {{ .Release.Name }}-{{ .Values.global.n3network.name }}
+  name: {{ .Release.Name }}-{{ .Values.global.n3network.name }}-vpp-upf
   annotations:
-    k8s.v1.cni.cncf.io/resourceName: intel.com/intel_sriov_dpdk
+    k8s.v1.cni.cncf.io/resourceName: {{ .Values.config.vpp.dpdk_devices.n3ResourceName | quote }}
 spec:
   config: |
     {
       "cniVersion": "0.3.1",
-      "name": "n3",
+      "name": "{{ .Release.Name }}-{{ .Values.global.n3network.name }}-vpp-upf",
       "type": "sriov",
       "vlan": {{ .Values.global.n3network.vlan | default 0 | int }},
       "spoofchk": "off",
-      "trust": "on",
-      "deviceID": "{{ .Values.config.vpp.n3Pci }}"
+      "trust": "on"
     }
 
 {{- end }}

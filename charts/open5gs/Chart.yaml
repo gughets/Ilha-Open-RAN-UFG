@@ -125,4 +125,9 @@ dependencies:
     repository: file://../vpp-upf
     condition: vpp-upf.enabled
     alias: vpp-upf
+  - name: gtw-app
+    version: ~0.0.1
+    repository: file://../gtw-app
+    condition: gtw-app.enabled
+    alias: gtw-app
 

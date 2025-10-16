@@ -1,0 +1,9 @@
+apiVersion: v2
+name: gtw-app
+description: Gateway application for O-RAN 5G Core Network (DNN)
+type: application
+version: 0.0.1
+appVersion: "1.0.0"
+authors:
+  - name: Murilo Silva
+    email: murilo.silva@rnp.br

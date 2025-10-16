@@ -33,6 +33,9 @@ image:
   tag: v22.10.1
   pullPolicy: Always
 
+updateStrategy:
+  type: Recreate
+
 resources:
   limits:
     cpu: "8"
@@ -45,27 +48,28 @@ resources:
 
 config:
   vpp:
-    mainCore: 24            # Set logical CPU core where main thread runs, if main core is not set VPP will use core 1 if available
-    workerCores: "25-27"    # Set logical CPU core(s) where worker threads are running
+    mainCore: 77            # Set logical CPU core where main thread runs, if main core is not set VPP will use core 1 if available
+    workerCores: "78-80"    # Set logical CPU core(s) where worker threads are running
     mainHeapSize: 4G        # Set the main heap size, default is 1G
-    n3Pci: 0000:b1:02.0     # PCI addresses of the UPF N3 interface
-    n4Pci: 0000:b1:02.1     # PCI addresses of the UPF N4 interface
-    n6Pci: 0000:b1:02.2     # PCI addresses of the UPF N6 interface
+    dpdk_devices:
+      n3ResourceName: rnp.br/intel_sriov_dpdk_core_n3
+      n4ResourceName: rnp.br/intel_sriov_dpdk_core_n4
+      n6ResourceName: rnp.br/intel_sriov_dpdk_core_n6
     maxSimdBitwidth: 512    # Enable/Disable AVX-512 vPMDs. Valid values: 256, 512
     nodeVariant: skx        # Specify the preferred node default variant. Valid values: hsw (avx2), icl (avx512_bitalg), skx (avx512f)
   upf:
     n3:
-      ip: 10.21.1.64        # UPF N3 IP address
+      ip: 10.23.31.23        # UPF N3 IP address
       cidr: 24              # UPF N3 CIDR
-      mtu: 1500             # UPF N3 MTU
+      mtu: 9600             # UPF N3 MTU
       nwi: oranbr           # UPF N3 NWI name
     n4:
-      ip: 10.21.1.65        # UPF N4 IP address
+      ip: 10.23.32.23        # UPF N4 IP address
       cidr: 24              # UPF N4 CIDR
-      mtu: 1500             # UPF N4 MTU
+      mtu: 9600             # UPF N4 MTU
     n6:
-      ip: 10.21.1.66        # UPF N6 IP address
+      ip: 10.21.0.241        # UPF N6 IP address
       cidr: 24              # UPF N6 CIDR
-      mtu: 1500             # UPF N6 MTU
-      gateway: 10.21.1.67   # UPF N6 Gateway 
-    nodeId: 10.21.1.65      # UPF Node ID (FQDN or N4 IP address)
+      mtu: 9600             # UPF N6 MTU
+      gateway: 10.21.0.2    # UPF N6 Gateway 
+    nodeId: 10.23.32.23      # UPF Node ID (FQDN or N4 IP address)

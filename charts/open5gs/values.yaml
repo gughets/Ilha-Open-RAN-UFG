@@ -57,6 +57,8 @@ eupf:
   enabled: false
 vpp-upf:
   enabled: false
+gtw-app:
+  enabled: false
 webui:
   enabled: true
 
