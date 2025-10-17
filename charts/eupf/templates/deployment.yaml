@@ -81,24 +81,13 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ include "helpers.pod.containerImage" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "ifNotPresent" }}
-          # {{- if .Values.command }}
-          # command: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
-          # {{- end }}
-          # {{- if .Values.args }}
-          # args: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
-          # {{- end }}
           command:
             - sh
             - -c
             - |
-              apk add --no-cache iproute2
-              
               sysctl -w net.ipv4.ip_forward=1
 
-              ip route add default via {{ .Values.networkConfig.n6if.gateway }} dev {{ .Values.networkConfig.n6if.ifname }} table 100
-              # ip route replace default via {{ .Values.networkConfig.n6if.gateway }} dev {{ .Values.networkConfig.n6if.ifname }}
-
-              ip rule add from {{ .Values.networkConfig.n6if.ipAddress }} table 100
+              ip route replace default via {{ .Values.networkConfig.n6if.gateway }} dev {{ .Values.networkConfig.n6if.ifname }}
 
               /app/bin/eupf --config /app/conf/config.yml
           {{- if .Values.env }}

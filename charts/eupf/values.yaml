@@ -220,14 +220,20 @@ resources:
 
 # TODO: Fix this probes with multi-interface eupf
 livenessProbe:
-  tcpSocket:
-    port: http
+  exec:
+    command:
+      - sh
+      - -c
+      - "nc -z -v 127.0.0.1 8080"
   initialDelaySeconds: 5
   periodSeconds: 10
 
 readinessProbe:
-  tcpSocket:
-    port: http
+  exec:
+    command:
+      - sh
+      - -c
+      - "nc -z -v 127.0.0.1 8080"
   initialDelaySeconds: 5
   periodSeconds: 10
 

@@ -119,6 +119,8 @@ eupf:
       ifname: n6
       ipAddress: 10.21.0.241
       gateway: 10.21.0.242
+  env:
+    GIN_MODE: "debug" # debug, release
   configMaps:
     config:
       data:
