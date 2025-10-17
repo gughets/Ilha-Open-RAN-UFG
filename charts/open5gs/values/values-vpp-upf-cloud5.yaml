@@ -35,10 +35,10 @@ global:
     enabled: true
     name: gtwnetwork
     type: sriov       # Options: sriov, macvlan, ipvlan
-    masterIf: eth0    # Required for macvlan, ipvlan, bridge
+    masterIf: eth0    # Required for macvlan, ipvlan
     subnetIP: 10.21.0.0
     cidr: 24
-    vlan: 3223           # Optional VLAN ID for sriov, macvlan, ipvlan
+    vlan: 3223           # Optional VLAN ID for sriov
 
 populate:
   enabled: true

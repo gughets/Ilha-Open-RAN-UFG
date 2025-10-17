@@ -1,72 +1,60 @@
 global:
-  imagePullPolicy: Always
-  
   # Global network parametes
   n3network:
     enabled: true
     name: n3network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    type: sriov
+    subnetIP: 10.23.31.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    vlan: 3231 # sriov only
   n4network:
     enabled: true
     name: n4network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    type: sriov
+    subnetIP: 10.23.32.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    vlan: 3232 # sriov only
+  n6network:
+    enabled: true
+    name: n6network
+    type: sriov
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223 # sriov only
 
 # network paramters
 hostNetwork: false
-n3if:  # GTP-U
-  ipAddress: 10.21.2.80
-n4if:  # PFCP
-  ipAddress: 10.21.2.82
 
-deploymentStrategy:
-  type: Recreate  ## TODO: add it to other charts that use multus-cni :)
-
-deploymentType: deployment
-# deploymentType: statefulset
-
-nodeSelector: 
-  kubernetes.io/hostname: oran-cloud2
-
-image:
-  registry: ghcr.io
-  repository: edgecomllc
-  name: eupf
-  tag: 0.7.1
-  pullPolicy: Always
-
-args:
-  - --config
-  - /app/conf/config.yml
+networkConfig:
+  n3if:  # GTP-U
+    ipAddress: 10.23.31.52
+  n4if:  # PFCP
+    ipAddress: 10.23.32.52
+  n6if:  # Data
+    ifname: n6
+    ipAddress: 10.21.0.241
+    gateway: 10.21.0.242
 
 configMaps:
   config:
     data:
       config.yml: |
         logging_level: info
-        interface_name: [n3, eth0]
+        interface_name: [n3, n6]
         xdp_attach_mode: generic # native or offload
         api_address: :8080
-        pfcp_address: 10.21.2.82:8805
-        pfcp_node_id: 10.21.2.82
+        pfcp_address: 10.23.32.52:8805
+        pfcp_node_id: 10.23.32.52
+        pfcp_remote_node: 10.23.32.51
         association_setup_timeout: 5
         metrics_address: :9090
-        n3_address: 10.21.2.80
+        n3_address: 10.23.31.52
         gtp_echo_interval: 10
         qer_map_size: 1024
         far_map_size: 1024
         urr_map_size: 1024
         pdr_map_size: 1024
-        resize_ebpf_maps: false
+        max_sessions: 65535
         heartbeat_retries: 3
         heartbeat_interval: 5
         heartbeat_timeout: 5
@@ -75,6 +63,22 @@ configMaps:
         ueip_pool: 10.45.0.0/16
         teid_pool: 65535
 
+deploymentStrategy:
+  type: Recreate
+
+deploymentType: deployment # or statefulset
+
+image:
+  registry: ghcr.io
+  repository: edgecomllc
+  name: eupf
+  tag: 0.7.1
+  pullPolicy: Always
+
+# args:
+#   - --config
+#   - /app/conf/config.yml
+
 volumes:
   - name: sys
     hostPath:
@@ -82,7 +86,7 @@ volumes:
   - name: config
     configMap:
       name: eupf-config
-      defaultMode: 420
+      defaultMode: 0644
       items:
         - key: config.yml
           mode: 493
@@ -96,7 +100,7 @@ volumeMounts:
     mountPath: /app/conf
 
 bird:
-  enabled: true
+  enabled: false
   image: docker.io/edgecom/bird:0.0.5
   service:
     enabled: false
@@ -120,7 +124,7 @@ xdpProgrammInstall:
     runAsNonRoot: false
   env:
     - name: POD_N6_IP
-      value: 10.100.100.12
+      value: 10.21.0.241
   command:
     - /bin/sh
     - -c
@@ -158,14 +162,11 @@ metrics:
       port: metrics
       path: "/metrics"
 
-podAnnotations:
-  cni.projectcalico.org/ipv4pools: '["default-pool"]'
-  cni.projectcalico.org/ipAddrs: '["172.2.0.100"]' # also change in the calico-bgp-ue-pool.yaml file
+podAnnotations: {}
+  # cni.projectcalico.org/ipv4pools: '["default-pool"]'
+  # cni.projectcalico.org/ipAddrs: '["172.2.0.100"]' # also change in the calico-bgp-ue-pool.yaml file
 
-podSecurityContext:
-  sysctls:
-  - name: net.ipv4.ip_forward
-    value: "1"
+podSecurityContext: {}
 
 securityContext:
   privileged: true
@@ -211,12 +212,13 @@ ingress:
 
 resources:
   limits:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 4000m
+    memory: 4Gi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1000m
+    memory: 2Gi
 
+# TODO: Fix this probes with multi-interface eupf
 livenessProbe:
   tcpSocket:
     port: http
@@ -230,7 +232,7 @@ readinessProbe:
   periodSeconds: 10
 
 ui:
-  enabled: true
+  enabled: false
   image:
     registry: ghcr.io
     repository: edgecomllc

@@ -18,25 +18,48 @@ spec:
   template:
     metadata:
       annotations:
-      {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-        k8s.v1.cni.cncf.io/networks: '[
-        {{- if $.Values.global.n3network.enabled }}
-            { "name": "{{ $.Values.global.n3network.name }}-{{ include "eupf.fullname" $ }}",
-              "interface": "n3",
-              "ips": [ "{{ .Values.n3if.ipAddress }}/{{ $.Values.global.n3network.cidr }}" ],
-              "gateway": [ "{{ $.Values.global.n3network.gatewayIP }}" ]
-            }
+        k8s.v1.cni.cncf.io/networks: >-
+          [
+            {{- $first := true }}
+            {{- if .Values.global.n3network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n3network.name }}-eupf",
+                "interface": "n3"
+                {{- if ne .Values.global.n3network.type "passthrough" }},
+                "ips": [ "{{ .Values.networkConfig.n3if.ipAddress }}/{{ .Values.global.n3network.cidr }}" ]
+                {{- end }}
+              }
+            {{- end }}
+
+            {{- if .Values.global.n4network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n4network.name }}-eupf",
+                "interface": "n4"
+                {{- if ne .Values.global.n4network.type "passthrough" }},
+                "ips": [ "{{ .Values.networkConfig.n4if.ipAddress }}/{{ .Values.global.n4network.cidr }}" ]
+                {{- end }}
+              }
+            {{- end }}
+
+            {{- if .Values.global.n6network.enabled }}
+              {{- if not $first }},{{- end }}
+              {{- $first = false }}
+              {
+                "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}-eupf",
+                "interface": "n6"
+                {{- if ne .Values.global.n6network.type "passthrough" }},
+                "ips": [ "{{ .Values.networkConfig.n6if.ipAddress }}/{{ .Values.global.n6network.cidr }}" ]
+                {{- end }}
+              }
+            {{- end }}
+          ]
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- if $.Values.global.n4network.enabled }}
-            ,{ "name": "{{ $.Values.global.n4network.name }}-{{ include "eupf.fullname" $ }}",
-              "interface": "n4",
-              "ips": [ "{{ .Values.n4if.ipAddress }}/{{ $.Values.global.n4network.cidr }}" ],
-              "gateway": [ "{{ $.Values.global.n4network.gatewayIP }}" ]
-            }
-        {{- end }}
-            ]'
       labels:
         {{- include "eupf.selectorLabels" . | nindent 8 }}
     spec:
@@ -44,7 +67,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      hostNetwork: {{ .Values.hostNetwork }}
+      hostNetwork: {{ .Values.hostNetwork | default false }}
       serviceAccountName: {{ include "eupf.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -57,13 +80,27 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ include "helpers.pod.containerImage" . }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.ImagePullPolicy }}
-          {{- if .Values.command }}
-          command: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
-          {{- end }}
-          {{- if .Values.args }}
-          args: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
-          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "ifNotPresent" }}
+          # {{- if .Values.command }}
+          # command: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
+          # {{- end }}
+          # {{- if .Values.args }}
+          # args: {{- include "helpers.common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
+          # {{- end }}
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache iproute2
+              
+              sysctl -w net.ipv4.ip_forward=1
+
+              ip route add default via {{ .Values.networkConfig.n6if.gateway }} dev {{ .Values.networkConfig.n6if.ifname }} table 100
+              # ip route replace default via {{ .Values.networkConfig.n6if.gateway }} dev {{ .Values.networkConfig.n6if.ifname }}
+
+              ip rule add from {{ .Values.networkConfig.n6if.ipAddress }} table 100
+
+              /app/bin/eupf --config /app/conf/config.yml
           {{- if .Values.env }}
           env:
             - name: MY_POD_IP
@@ -101,7 +138,26 @@ spec:
           {{- toYaml . | nindent 12 }}
         {{- end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            limits:
+              {{- $count := 0 }}
+              {{- $networks := dict "n3network" $.Values.global.n3network "n4network" $.Values.global.n4network "n6network" $.Values.global.n6network }}
+              {{- range $name, $net := $networks }}
+                {{- if and $net.enabled (eq $net.type "sriov") }}
+                  {{- $count = add $count 1 }}
+                {{- end }}
+              {{- end }}
+              rnp.br/intel_sriov_netdevice: "{{ $count }}"
+              {{- with .Values.resources.limits }}{{ toYaml . | nindent 14 }}{{- end }}
+            requests:
+              {{- $count := 0 }}
+              {{- $networks := dict "n3network" $.Values.global.n3network "n4network" $.Values.global.n4network "n6network" $.Values.global.n6network }}
+              {{- range $name, $net := $networks }}
+                {{- if and $net.enabled (eq $net.type "sriov") }}
+                  {{- $count = add $count 1 }}
+                {{- end }}
+              {{- end }}
+              rnp.br/intel_sriov_netdevice: "{{ $count }}"          
+              {{- with .Values.resources.requests }}{{ toYaml . | nindent 14 }}{{- end }}
           {{- include "helpers.pod.volumeMounts" . | nindent 10 }}
         {{- if .Values.bird.enabled }}
         - name: bird

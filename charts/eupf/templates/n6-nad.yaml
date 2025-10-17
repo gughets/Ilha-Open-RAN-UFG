@@ -1,0 +1,59 @@
+{{- if $.Values.global.n6network.enabled }}
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.global.n6network.name }}-eupf
+  {{- if eq .Values.global.n6network.type "sriov" }}
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: rnp.br/intel_sriov_netdevice
+  {{- end }}
+spec:
+  config: |-
+    {{- if eq .Values.global.n6network.type "passthrough" }}
+    {
+      "cniVersion": "0.3.1",
+      "type": "passthrough",
+      "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}",
+      "master": {{ .Values.global.n6network.masterIf | quote }}
+    }
+    {{- else if eq .Values.global.n6network.type "sriov" }}
+    {
+      "cniVersion": "0.3.1",
+      "type": "sriov",
+      "name": "{{ .Release.Name }}-{{ .Values.global.n6network.name }}",
+      "spoofchk": "off",
+      "trust": "on",
+      "vlan": {{ .Values.global.n6network.vlan | default 0 | int }},
+      "ipam": {
+        "type": "static"    
+      }
+    }
+    {{- else }}
+    {
+      "cniVersion": "0.3.1",
+      "plugins": [
+        {
+          "type": {{ .Values.global.n6network.type | quote }},
+          "capabilities": { "ips": true },
+          "master": {{ .Values.global.n6network.masterIf | quote }},
+          {{- if eq .Values.global.n6network.type "macvlan" }}
+          "mode": "bridge",
+          {{- end }}
+          {{- if eq .Values.global.n6network.type "ipvlan" }}
+          "mode": "l2",
+          {{- end }}
+          "ipam": {
+            "type": "static"
+          }
+        }
+        {{- if eq .Values.global.n6network.type "macvlan" }}
+        ,
+        {
+          "capabilities": { "mac": true },
+          "type": "tuning"
+        }
+        {{- end }}
+      ]
+    }
+    {{- end }}
+{{- end }}

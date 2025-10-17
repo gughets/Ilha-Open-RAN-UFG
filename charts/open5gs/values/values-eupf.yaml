@@ -5,30 +5,39 @@ global:
   n2network:
     enabled: true
     name: n2network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    type: sriov # options: sriov, macvlan, ipvlan, passthrough
+    subnetIP: 10.23.30.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    vlan: 3230 # sriov only
   n3network:
     enabled: true
     name: n3network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    type: sriov
+    subnetIP: 10.23.31.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    vlan: 3231 # sriov only
   n4network:
     enabled: true
     name: n4network
-    type: macvlan
-    masterIf: vlan3225.p4_1
-    subnetIP: 10.21.2.0
+    type: sriov
+    subnetIP: 10.23.32.0
     cidr: 24
-    gatewayIP: 10.21.2.109
-    excludeIP: 10.21.2.109
+    vlan: 3232 # sriov only
+  n6network:
+    enabled: true
+    name: n6network
+    type: sriov
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223 # sriov only
+  gtwnetwork:
+    enabled: true
+    name: gtwnetwork
+    type: sriov       # Options: sriov, macvlan, ipvlan
+    masterIf: eth0    # Required for macvlan, ipvlan
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223           # Optional VLAN ID for sriov
 
 populate:
   enabled: true
@@ -38,14 +47,14 @@ populate:
     tag: 0.10.3
     pullPolicy: IfNotPresent
   initCommands:
-    # example of initCommands:
-    #  - open5gs-dbctl add 901700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
-    #  - open5gs-dbctl add_ue_with_apn 901700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA oranbr
-    - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 ffffff # CPE
-    - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 ffffff # CELLPHONE-1
-    - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 ffffff # CELLPHONE-2
-    - open5gs-dbctl add_ue_with_slice 901700000041596 C27D1C24D7AEA00A71C8868007D6B3F7 87D0D9F22D90EF6C7933494C872D2897 oranbr 1 ffffff # RASP-1
-    - open5gs-dbctl add_ue_with_slice 901700000000001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 ffffff # SRSUE (test)
+  # example of initCommands: IMSI - Key - OPc - DNN - SST - SD
+  #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
+  #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
+  #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
+    - open5gs-dbctl add_ue_with_slice 001010000021001 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CPE
+    - open5gs-dbctl add_ue_with_slice 001010000021002 00112233445566778899AABBCCDDEEFF 279EB54971771559879284FDDDE3EE0C oranbr 1 FFFFFF # CELLPHONE-1
+    - open5gs-dbctl add_ue_with_slice 901700000041589 16FC086F3BBCA529B7221C08E4F6DFE3 51680E453DD972FBA105C7D2EAFE8613 oranbr 1 FFFFFF # CELLPHONE-2
+    - open5gs-dbctl add_ue_with_slice 901700000041596 C27D1C24D7AEA00A71C8868007D6B3F7 87D0D9F22D90EF6C7933494C872D2897 oranbr 1 FFFFFF # RASP-1
 
 # Common
 mongodb:
@@ -56,70 +65,80 @@ mongodb:
     enabled: false
   global:
     storageClass: openebs-hostpath
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 smf:
   enabled: true
+  updateStrategy:
+    type: Recreate  
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
     n4if:
-      ipAddress: "10.21.2.51"
+      ipAddress: "10.23.32.51"
     upf:
       pfcp:
-        hostname: "10.21.2.82"
+        hostname: "10.23.32.52"
         port: 8805
-    sbi:
-      client:
-        scp:
-          enabled: true
     pcrf:
       enabled: false
     dnsList:
-      - "8.8.8.8"
-      - "1.1.1.1"
-      - 2001:4860:4860::8888
-      - 2001:4860:4860::8844
+    - 8.8.8.8
+    - 1.1.1.1
+    - 2001:4860:4860::8888
+    - 2606:4700:4700::1111
     subnetList:
       - subnet: 10.45.0.0/16
         gateway: 10.45.0.1
         dnn: oranbr
     mtu: 1500
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 eupf:
   enabled: true
-  n3if:  # GTP-U
-    ipAddress: 10.21.2.80
-  n4if:  # PFCP
-    ipAddress: 10.21.2.82
+  deploymentType: deployment # or statefulset
+  deploymentStrategy:
+    type: Recreate
+  replicaCount: 1
   image:
     registry: ghcr.io
     repository: edgecomllc
     name: eupf
-    tag: 0.7.1
+    tag: main
     pullPolicy: IfNotPresent
+  networkConfig:
+    n3if:  # GTP-U
+      ipAddress: 10.23.31.52
+    n4if:  # PFCP
+      ipAddress: 10.23.32.52
+    n6if:  # Data
+      ifname: n6
+      ipAddress: 10.21.0.241
+      gateway: 10.21.0.242
   configMaps:
     config:
       data:
         config.yml: |
           logging_level: info
-          interface_name: [n3, eth0]
+          interface_name: [n3, n6]
           xdp_attach_mode: generic # native or offload
           api_address: :8080
-          pfcp_address: 10.21.2.82:8805
-          pfcp_node_id: 10.21.2.82
+          pfcp_address: 10.23.32.52:8805
+          pfcp_node_id: 10.23.32.52
+          pfcp_remote_node: 10.23.32.51
           association_setup_timeout: 5
           metrics_address: :9090
-          n3_address: 10.21.2.80
+          n3_address: 10.23.31.52
           gtp_echo_interval: 10
           qer_map_size: 1024
           far_map_size: 1024
           urr_map_size: 1024
           pdr_map_size: 1024
-          resize_ebpf_maps: false
+          max_sessions: 65535
           heartbeat_retries: 3
           heartbeat_interval: 5
           heartbeat_timeout: 5
@@ -127,12 +146,6 @@ eupf:
           feature_ftup: true
           ueip_pool: 10.45.0.0/16
           teid_pool: 65535
-  bird:
-    enabled: true
-    image: docker.io/edgecom/bird:0.0.5
-    env:
-      BIRD_LOCAL_AS: 65001
-      BIRD_LOCAL_PREFIX: 10.45.0.0/16
   ui:
     enabled: true
     image:
@@ -140,40 +153,56 @@ eupf:
       repository: edgecomllc
       name: eupf-ui
       tag: 92294e11a733790ae2872dd1bc3128ce1a550734
-      pullPolicy: IfNotPresent
+      pullPolicy: Always
+    service:
+      port: 8081
     env:
       API_ADDR: localhost:8080
-  deploymentStrategy:
-    type: Recreate
-  podAnnotations:
-    cni.projectcalico.org/ipv4pools: '["default-pool"]'
-    cni.projectcalico.org/ipAddrs: '["172.2.0.100"]' # also change in the calico-bgp-ue-pool.yaml file
-  nodeSelector: 
-    kubernetes.io/hostname: oran-cloud2
 
-upf:
-  enabled: false
+gtw-app:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: docker.io/nicolaka/netshoot
+    pullPolicy: IfNotPresent
+    tag: "v0.14"
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+      rnp.br/intel_sriov_netdevice: "1"
+    requests:
+      cpu: "500m"
+      memory: "256Mi"
+      rnp.br/intel_sriov_netdevice: "1"
+  config:
+    gtwif:
+      ipAddress: "10.21.0.242"
+    ueSubnet: "10.45.0.0/16"
+    upfN6: "10.21.0.241"
+    siteRouter: "10.21.0.100"
 
 webui:
   enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs-webui
+    tag: "2.7.6"
   services:
     http:
-      type: NodePort
+      type: "NodePort"
       nodePorts:
         http: "30999"
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
-# 4G
+# 4G (disabled)
 hss:
   enabled: false
-  mongodb:
-    enabled: false
 mme:
   enabled: false
 pcrf:
   enabled: false
-  mongodb:
-    enabled: false
 sgwc:
   enabled: false
 sgwu:
@@ -182,169 +211,209 @@ sgwu:
 # 5G
 amf:
   enabled: true
+  livenessProbe:
+    enabled: false ## FIXME
+  readinessProbe:
+    enabled: false ## FIXME
+  updateStrategy:
+    type: Recreate  
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 0
+    runAsNonRoot: false
+    privileged: true
+    capabilities:
+      add: ["NET_ADMIN"]
   config:
-    networkName: OpenRANBR-eUPF
+    logLevel: info
     n2if:
-      ipAddress: "10.21.2.50"
-    sbi:
-      client:
-        scp:
-          enabled: true
-    guamiList: ## Global Unique AMF ID
-      - plmn_id:
-          mcc: "901" ## Mobile Country Code
-          mnc: "70" ## Mobile Network Code
-        amf_id:
-          region: 1
-          set: 1
-      - plmn_id:
-          mcc: "001" ## Mobile Country Code
-          mnc: "01" ## Mobile Network Code
-        amf_id:
-          region: 1
-          set: 1
-    taiList: ## Tracking Area Identify
+      ipAddress: "10.23.30.51"
+    guamiList:
       - plmn_id:
           mcc: "001"
           mnc: "01"
-        tac: [1] ## Tracking Area Code
+        amf_id:
+          region: 1
+          set: 1
       - plmn_id:
           mcc: "901"
           mnc: "70"
-        tac: [1] ## Tracking Area Code
-    plmnList: ## Public Land Mobile Network
+        amf_id:
+          region: 1
+          set: 1
+      - plmn_id:
+          mcc: "999"
+          mnc: "99"
+        amf_id:
+          region: 1
+          set: 1
+      - plmn_id:
+          mcc: "001"
+          mnc: "02"
+        amf_id:
+          region: 1
+          set: 1
+      - plmn_id:
+          mcc: "001"
+          mnc: "03"
+        amf_id:
+          region: 1
+          set: 1
+    taiList:
+      - plmn_id:
+          mcc: "001"
+          mnc: "01"
+        tac: [1]
       - plmn_id:
           mcc: "901"
           mnc: "70"
-        s_nssai: ## Single – Network Slice Selection Assistance Information
-          - sst: 1 
-            sd: "0xffffff"
+        tac: [1]
+      - plmn_id:
+          mcc: "999"
+          mnc: "99"
+        tac: [1]
+      - plmn_id:
+          mcc: "001"
+          mnc: "02"
+        tac: [1]
+      - plmn_id:
+          mcc: "001"
+          mnc: "03"
+        tac: [1]
+    plmnList:
       - plmn_id:
           mcc: "001"
           mnc: "01"
         s_nssai:
-          - sst: 1 
-            sd: "0xffffff"
-  nodeSelector: {}
+          - sst: 1
+            sd: "0xFFFFFF"
+      - plmn_id:
+          mcc: "901"
+          mnc: "70"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+      - plmn_id:
+          mcc: "999"
+          mnc: "99"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+      - plmn_id:
+          mcc: "001"
+          mnc: "02"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+      - plmn_id:
+          mcc: "001"
+          mnc: "03"
+        s_nssai:
+          - sst: 1
+            sd: "0xFFFFFF"
+    networkName: OPENRANBR-5GS
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 ausf:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
-  config:
-    sbi:
-      client:
-        scp:
-          enabled: true
-  nodeSelector: {}
+    tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 bsf:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
-  config:
-    sbi:
-      client:
-        scp:
-          enabled: true
-  nodeSelector: {}
+    tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 nrf:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
+    logLevel: info
     servingList:
       - plmn_id:
-          mcc: 901
-          mnc: 70
+          mcc: "001"
+          mnc: "01"
       - plmn_id:
-          mcc: 001
-          mnc: 01
-  nodeSelector: {}
+          mcc: "901"
+          mnc: "70"
+      - plmn_id:
+          mcc: "999"
+          mnc: "99"
+      - plmn_id:
+          mcc: "001"
+          mnc: "02"
+      - plmn_id:
+          mcc: "001"
+          mnc: "03"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 nssf:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
+    tag: "2.7.6"
   config:
-    sbi:
-      client:
-        scp:
-          enabled: true
     nsiList:
-      - nrf:
-        sst: 1 ## eMBB
-        sd: "0xffffff"
-      - nrf:
-        sst: 2 ## URLLC
-        sd: "0x000001"
-      - nrf:
-        sst: 3 ## MIoT
-        sd: "0x000001"
-  nodeSelector: {}
+      - uri: ""
+        sst: 1
+        sd: "0xFFFFFF"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 pcf:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
-  config:
-    sbi:
-      client:
-        scp:
-          enabled: true
+    tag: "2.7.6"
   mongodb:
     enabled: false
-  nodeSelector: {}
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+
+scp:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.6"
+  mongodb:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
 
 udm:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
-  config:
-    sbi:
-      client:
-        scp:
-          enabled: true
-  nodeSelector: {}
-  
+    tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
+    
 udr:
   enabled: true
   image:
     registry: docker.io
     repository: gradiant/open5gs
-    tag: "2.7.5"
-  config:
-    sbi:
-      client:
-        scp:
-          enabled: true
-  mongodb:
-    enabled: false
-  nodeSelector: {}
-  
-scp:
-  enabled: true
-  image:
-    registry: docker.io
-    repository: gradiant/open5gs
-    tag: "2.7.5"
-  mongodb:
-    enabled: false
-  nodeSelector: {}
+    tag: "2.7.6"
+  nodeSelector:
+    kubernetes.io/hostname: oran-cloud5
