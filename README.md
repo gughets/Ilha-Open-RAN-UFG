@@ -1,5 +1,5 @@
 # POC Open5GS — Múltiplas UPFs, PFCP e Failover
-
+![Experimento feito e validado no ambiente IlhaOpenRAN (assets/images/ArqTestes.png)
 ## 1. Objetivo
 
 Este documento registra a configuração e os testes realizados no ambiente Open5GS em Kubernetes para utilização de duas UPFs:
