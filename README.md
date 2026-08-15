@@ -49,6 +49,8 @@ Nós utilizados:
 sm-cerise
 ```
 
+![Pods das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/podsUPF.png)
+
 ### Componentes principais
 
 No teste final foram utilizados:
