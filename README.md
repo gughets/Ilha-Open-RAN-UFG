@@ -50,7 +50,7 @@ sm-cerise
 ```
 
 ![Pods das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/podsUPF.png)
-![Alternancia das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/AlternanciaEntrePODS.png)
+![Alternancia das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/AlternanciaEntrePODs.png)
 
 ### Componentes principais
 
