@@ -1,4 +1,4 @@
-# POC Open5GS — Múltiplas UPFs, PFCP e Failover
+# POC Open5GS — Múltiplas UPFs, PFCP e Failover de UPF
 ![Experimento feito e validado no ambiente IlhaOpenRAN](assets/images/ArqTestes.png)
 ## 1. Objetivo
 
@@ -50,6 +50,7 @@ sm-cerise
 ```
 
 ![Pods das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/podsUPF.png)
+![Alternancia das UPFs no namespace open5gs da IlhaOpenRAN](assets/images/AlternanciaEntrePODS.png)
 
 ### Componentes principais
 
