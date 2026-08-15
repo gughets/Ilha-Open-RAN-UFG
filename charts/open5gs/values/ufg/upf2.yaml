@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf2
+  namespace: open5gs
+  labels:
+    app.kubernetes.io/name: upf2
+    app.kubernetes.io/instance: open5gs-upf2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: upf2
+      app.kubernetes.io/instance: open5gs-upf2
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: upf2
+        app.kubernetes.io/instance: open5gs-upf2
+
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "n3network-open5gs-upf",
+              "interface": "n3",
+              "ips": [ "10.62.101.57/24" ]
+            }
+          ]
+
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: sm-cerise
+
+      securityContext:
+        fsGroup: 0
+
+      initContainers:
+        - name: tun-create
+          image: docker.io/gradiant/open5gs:2.7.6
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - /k8s-entrypoint.sh
+
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            capabilities:
+              add:
+                - NET_ADMIN
+
+          volumeMounts:
+            - name: entrypoint
+              mountPath: /k8s-entrypoint.sh
+              subPath: k8s-entrypoint.sh
+
+      containers:
+        - name: open5gs-upf
+          image: docker.io/gradiant/open5gs:2.7.6
+          imagePullPolicy: IfNotPresent
+
+          command:
+            - open5gs-upfd
+
+          securityContext:
+            privileged: true
+            runAsNonRoot: false
+            runAsUser: 0
+            capabilities:
+              add:
+                - NET_ADMIN
+
+          ports:
+            - name: pfcp
+              containerPort: 8805
+              protocol: UDP
+
+            - name: gtpu
+              containerPort: 2152
+              protocol: UDP
+
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+
+          resources:
+            requests:
+              rnp.br/intel_sriov_netdevice: "1"
+            limits:
+              rnp.br/intel_sriov_netdevice: "1"
+
+          volumeMounts:
+            - name: config
+              mountPath: /opt/open5gs/etc/open5gs/upf.yaml
+              subPath: upf.yaml
+
+      volumes:
+        - name: config
+          configMap:
+            name: open5gs-upf2
+
+        - name: entrypoint
+          configMap:
+            name: open5gs-upf-entrypoint
+            defaultMode: 0777

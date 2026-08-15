@@ -1,0 +1,147 @@
+dbURI: "mongodb://open5gs-mongodb/open5gs"
+
+global:
+  n3network:
+    enabled: true
+    name: n3network
+    type: sriov
+    subnetIP: 10.62.101.0
+    cidr: 24
+    vlan: 1001
+
+mongodb:
+  enabled: false
+
+populate:
+  enabled: false
+
+webui:
+  enabled: false
+
+amf:
+  enabled: false
+
+ausf:
+  enabled: false
+
+bsf:
+  enabled: false
+
+hss:
+  enabled: false
+
+mme:
+  enabled: false
+
+nrf:
+  enabled: false
+
+nssf:
+  enabled: false
+
+pcf:
+  enabled: false
+
+pcrf:
+  enabled: false
+
+scp:
+  enabled: false
+
+sgwc:
+  enabled: false
+
+sgwu:
+  enabled: false
+
+smf:
+  enabled: true
+
+  updateStrategy:
+    type: Recreate
+
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.6"
+
+  config:
+    upf:
+      pfcp:
+        hostnames:
+          - open5gs-upf-pfcp
+          - open5gs-upf2-pfcp
+
+    pcrf:
+      enabled: false
+
+    dnsList:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 2001:4860:4860::8888
+      - 2001:4860:4860::8844
+
+    subnetList:
+      - subnet: 10.45.0.0/16
+        gateway: 10.45.0.1
+        dnn: oranbr
+
+    mtu: 1500
+
+  nodeSelector:
+    kubernetes.io/hostname: sm-cerise
+
+udm:
+  enabled: false
+
+udr:
+  enabled: false
+
+upf:
+  enabled: true
+
+  updateStrategy:
+    type: Recreate
+
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs
+    tag: "2.7.6"
+
+  podSecurityContext:
+    enabled: true
+    fsGroup: 0
+
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 0
+    privileged: true
+    capabilities:
+      add:
+        - NET_ADMIN
+
+  config:
+    hostNetwork: false
+
+    n3if:
+      ipAddress: "10.62.101.57"
+
+    upf:
+      pfcp:
+        dev: eth0
+        advertise: open5gs2-upf-pfcp
+
+      gtpu:
+        dev: n3
+
+    subnetList:
+      - subnet: 10.46.0.0/16
+        gateway: 10.46.0.1
+        dnn: oranbr
+        dev: ogstun
+        mask: 16
+        createDev: true
+        enableNAT: true
+
+  nodeSelector:
+    kubernetes.io/hostname: sm-cerise

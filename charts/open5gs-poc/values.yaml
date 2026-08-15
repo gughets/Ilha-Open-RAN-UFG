@@ -1,0 +1,105 @@
+dbURI: "mongodb://{{ .Release.Name }}-mongodb/open5gs"
+
+global:
+  # Global network parametes
+  n2network:
+    enabled: false
+    name: n2network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225 # sriov only
+  n3network:
+    enabled: false
+    name: n3network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225 # sriov only
+  n4network:
+    enabled: false
+    name: n4network
+    type: sriov
+    subnetIP: 10.21.1.0
+    cidr: 24
+    vlan: 3225
+  n6network:
+    enabled: false
+    name: n6network
+    type: sriov
+    subnetIP: 10.21.0.0
+    cidr: 24
+    vlan: 3223 # sriov only
+
+populate:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: gradiant/open5gs-dbctl
+    tag: 0.10.3
+    pullPolicy: IfNotPresent
+  initCommands: []
+  # example of initCommands:
+  #  - open5gs-dbctl add 999700000000001 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA
+  #  - open5gs-dbctl add_ue_with_apn 999700000000002 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet
+  #  - open5gs-dbctl add_ue_with_slice 999700000000003 465B5CE8B199B49FAA5F0A2EE238A6BC E8ED289DEBA952E4283B54E88E6183CA internet 1 111111
+
+# Common
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+smf:
+  enabled: true
+upf:
+  enabled: false
+eupf:
+  enabled: false
+vpp-upf:
+  enabled: false
+gtw-app:
+  enabled: false
+webui:
+  enabled: true
+
+# 4G
+hss:
+  enabled: true
+  mongodb:
+    enabled: false
+mme:
+  enabled: true
+pcrf:
+  enabled: true
+  mongodb:
+    enabled: false
+sgwc:
+  enabled: true
+sgwu:
+  enabled: true
+
+# 5G
+amf:
+  enabled: true
+ausf:
+  enabled: true
+bsf:
+  enabled: true
+nrf:
+  enabled: true
+nssf:
+  enabled: true
+pcf:
+  enabled: true
+  mongodb:
+    enabled: false
+scp:
+  enabled: true
+  mongodb:
+    enabled: false
+udm:
+  enabled: true
+udr:
+  enabled: true
+  mongodb:
+    enabled: false
